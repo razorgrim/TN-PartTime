@@ -1,0 +1,1200 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  
+  /* Light Mode Color Palette */
+  --bg-app: #f4f6fa;
+  --bg-card: #ffffff;
+  --bg-input: #f8fafc;
+  --border-color: #e2e8f0;
+  
+  /* Brand/Accent Colors */
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-light: #e0e7ff;
+  
+  --secondary: #0f172a;
+  
+  /* Status Colors */
+  --status-pending-bg: #fef3c7;
+  --status-pending-text: #b45309;
+  --status-pending-border: #fde68a;
+  
+  --status-enabled-bg: #d1fae5;
+  --status-enabled-text: #065f46;
+  --status-enabled-border: #a7f3d0;
+  
+  --status-disabled-bg: #fee2e2;
+  --status-disabled-text: #991b1b;
+  --status-disabled-border: #fecaca;
+  
+  /* Neutral Typography Colors */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.03);
+  --shadow-phone: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+  
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  line-height: 1.5;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+
+.animate-fade {
+  animation: fadeIn var(--transition-normal) forwards;
+}
+
+.animate-scale {
+  animation: scaleUp var(--transition-normal) forwards;
+}
+
+/* Core Layout styles */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-sm);
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--secondary);
+}
+
+.navbar-logo-icon {
+  width: 2rem;
+  height: 2rem;
+  background: linear-gradient(135deg, var(--primary) 0%, #6366f1 100%);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.view-controls {
+  display: flex;
+  background-color: var(--bg-app);
+  padding: 0.25rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  gap: 0.25rem;
+}
+
+.view-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  background: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.view-btn.active {
+  background-color: var(--bg-card);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+  font-weight: 600;
+}
+
+.view-btn:hover:not(.active) {
+  color: var(--text-primary);
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Main Dashboard split layout */
+.main-content {
+  flex: 1;
+  display: flex;
+  padding: 2rem;
+  gap: 2rem;
+  justify-content: center;
+  max-width: 1600px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.admin-pane {
+  flex: 1.5;
+  min-width: 0; /* fixes flex-child overflow */
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: fadeIn 0.4s ease;
+}
+
+.simulator-pane {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  animation: fadeIn 0.4s ease;
+}
+
+/* Phone Simulator Frame */
+.phone-frame {
+  width: 375px;
+  height: 780px;
+  background-color: #000000;
+  border-radius: 40px;
+  padding: 10px;
+  box-shadow: var(--shadow-phone);
+  position: sticky;
+  top: 100px;
+  border: 4px solid #334155;
+  display: flex;
+  flex-direction: column;
+}
+
+.phone-inner {
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg-app);
+  border-radius: 32px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #1e293b;
+}
+
+/* Phone UI Elements */
+.phone-status-bar {
+  height: 24px;
+  padding: 0 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1e293b;
+  background-color: transparent;
+  z-index: 10;
+}
+
+.phone-notch {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 110px;
+  height: 18px;
+  background-color: #000000;
+  border-radius: var(--radius-full);
+  z-index: 20;
+}
+
+.phone-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  position: relative;
+  scrollbar-width: none; /* Hide scrollbar for mobile feel */
+}
+
+.phone-screen::-webkit-scrollbar {
+  display: none;
+}
+
+/* Card Styling */
+.card {
+  background-color: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-fast);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Status Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  text-transform: capitalize;
+  border: 1px solid transparent;
+}
+
+.badge-pending {
+  background-color: var(--status-pending-bg);
+  color: var(--status-pending-text);
+  border-color: var(--status-pending-border);
+}
+
+.badge-enabled {
+  background-color: var(--status-enabled-bg);
+  color: var(--status-enabled-text);
+  border-color: var(--status-enabled-border);
+}
+
+.badge-disabled {
+  background-color: var(--status-disabled-bg);
+  color: var(--status-disabled-text);
+  border-color: var(--status-disabled-border);
+}
+
+/* Table styles */
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  background-color: var(--bg-card);
+}
+
+.admin-table th {
+  background-color: #f8fafc;
+  padding: 0.75rem 1rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.admin-table td {
+  padding: 1rem;
+  font-size: 0.875rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.admin-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table tr:hover td {
+  background-color: #f8fafc;
+}
+
+/* Forms and Inputs */
+.form-group {
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  transition: all var(--transition-fast);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background-color: var(--bg-card);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: 1px solid transparent;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+}
+
+.btn-secondary {
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.btn-secondary:hover {
+  background-color: var(--border-color);
+}
+
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: var(--radius-sm);
+}
+
+.btn-success-outline {
+  background-color: transparent;
+  color: var(--status-enabled-text);
+  border-color: var(--status-enabled-border);
+}
+
+.btn-success-outline:hover {
+  background-color: var(--status-enabled-bg);
+}
+
+.btn-danger-outline {
+  background-color: transparent;
+  color: var(--status-disabled-text);
+  border-color: var(--status-disabled-border);
+}
+
+.btn-danger-outline:hover {
+  background-color: var(--status-disabled-bg);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background-color: var(--bg-card);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-width: 300px;
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.toast-success {
+  border-left-color: #10b981;
+}
+
+.toast-error {
+  border-left-color: #ef4444;
+}
+
+.toast-info {
+  border-left-color: var(--primary);
+}
+
+/* Responsive Rules */
+@media (max-width: 1024px) {
+  .main-content {
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+  }
+  .admin-pane {
+    width: 100%;
+    order: 2;
+  }
+  .simulator-pane {
+    width: 100%;
+    order: 1;
+    position: relative;
+  }
+  .phone-frame {
+    position: relative;
+    top: 0;
+  }
+}
+
+/* ==========================================================================
+   Phase 2: Staff Mobile Dashboard Styles
+   ========================================================================== */
+
+/* Welcome Banner */
+.phone-welcome-banner {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: white;
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.3);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.phone-welcome-banner::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.welcome-info h4 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.15rem;
+  letter-spacing: -0.01em;
+}
+
+.welcome-info p {
+  font-size: 0.8rem;
+  opacity: 0.85;
+  font-weight: 500;
+}
+
+.welcome-avatar-container {
+  position: relative;
+}
+
+.welcome-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 2px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.welcome-avatar-status {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #10b981;
+  border: 2px solid #6366f1; /* blend with banner border */
+}
+
+/* 2x2 App Grid */
+.phone-app-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.phone-app-card {
+  background-color: var(--bg-card);
+  border-radius: 20px;
+  padding: 1.5rem 1rem;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.phone-app-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  border-color: rgba(79, 70, 229, 0.15);
+}
+
+.phone-app-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.875rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+}
+
+/* Icon specific theme varieties */
+.icon-attendance {
+  background-color: #e0e7ff;
+  color: #4f46e5;
+}
+.icon-claims {
+  background-color: #e0f2fe;
+  color: #0284c7;
+}
+.icon-profile {
+  background-color: #fce7f3;
+  color: #db2777;
+}
+.icon-support {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.phone-app-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.15rem;
+}
+
+.phone-app-sublabel {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.phone-nav-bar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  height: 75px;
+  background-color: var(--bg-card);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 1rem;
+  z-index: 100;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.phone-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  width: 50px;
+  height: 100%;
+  gap: 0.25rem;
+  transition: color var(--transition-fast);
+}
+
+.phone-nav-item.active {
+  color: var(--primary);
+}
+
+.phone-nav-item span {
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+/* Floating Action Button (FAB) */
+.phone-nav-fab-container {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.phone-nav-fab {
+  position: absolute;
+  top: -24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  color: white;
+  border: 4px solid var(--bg-card);
+  box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4), 0 4px 6px -2px rgba(79, 70, 229, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 101;
+  transition: transform var(--transition-fast);
+}
+
+.phone-nav-fab:hover {
+  transform: translateY(-2px);
+}
+
+/* Content Screen Spacing for tabs */
+.phone-tab-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem;
+  padding-bottom: 90px; /* Space for sticky bottom nav */
+  overflow-y: auto;
+  min-height: 100%;
+}
+
+.phone-screen-header {
+  margin-bottom: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.phone-screen-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+/* Attendance Card Custom Styles */
+.job-card {
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  background-color: var(--bg-card);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.01);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.job-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.job-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.job-card-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.775rem;
+  color: var(--text-secondary);
+  border-top: 1px solid #f1f5f9;
+  padding-top: 0.6rem;
+}
+
+.job-card-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* GPS Simulator Widget styling */
+.gps-simulation-card {
+  background-color: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 16px;
+  padding: 0.85rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.775rem;
+  color: #92400e;
+}
+
+.gps-simulation-toggle {
+  display: flex;
+  background-color: rgba(255, 255, 255, 0.75);
+  border-radius: 8px;
+  padding: 0.2rem;
+  border: 1px solid #fcd34d;
+  margin-top: 0.5rem;
+}
+
+.gps-toggle-btn {
+  flex: 1;
+  text-align: center;
+  border: none;
+  background: none;
+  font-size: 0.725rem;
+  font-weight: 700;
+  color: #b45309;
+  padding: 0.35rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.gps-toggle-btn.active {
+  background-color: #f59e0b;
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Claims Screen history list */
+.claims-summary-card {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.claim-history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.claim-history-item:last-child {
+  border-bottom: none;
+}
+
+/* Chat Simulator elements */
+.chat-window {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #f8fafc;
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  height: 380px;
+  overflow: hidden;
+}
+
+.chat-messages-container {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.chat-bubble {
+  max-width: 80%;
+  padding: 0.6rem 0.85rem;
+  border-radius: 14px;
+  font-size: 0.775rem;
+  line-height: 1.4;
+}
+
+.chat-bubble-received {
+  align-self: flex-start;
+  background-color: white;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-bottom-left-radius: 4px;
+}
+
+.chat-bubble-sent {
+  align-self: flex-end;
+  background-color: var(--primary);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-input-wrapper {
+  padding: 0.75rem;
+  background-color: white;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  font-size: 0.775rem;
+}
+
+.chat-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+/* ==========================================================================
+   Phase 3.5: Redesigned Mockup Attendance View
+   ========================================================================== */
+
+/* Attendance Header Bar */
+.attendance-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+  color: white;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  padding: 0 1rem;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.attendance-back-btn {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: background-color var(--transition-fast);
+}
+
+.attendance-back-btn:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.attendance-header-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* Clock & Date Details */
+.attendance-clock {
+  font-size: 2.25rem;
+  font-weight: 800;
+  text-align: center;
+  color: #0f172a;
+  margin-top: 1.25rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.attendance-date {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  color: #3b82f6;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Map Card and Positioning Overlays */
+.attendance-map-card {
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  height: 180px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  margin-bottom: 1.25rem;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.attendance-gps-banner {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.65rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+  z-index: 10;
+  border: 1px solid transparent;
+}
+
+.attendance-gps-banner-ok {
+  background-color: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.attendance-gps-banner-warn {
+  background-color: #fffbeb;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.attendance-map-pin {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #3b82f6;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.25));
+  animation: fadeIn 0.4s ease;
+  z-index: 5;
+}
+
+/* Timing Card Summary Grid Row */
+.attendance-summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.45rem;
+  margin-bottom: 1.25rem;
+}
+
+.attendance-summary-col {
+  flex: 1;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.6rem 0.15rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.01);
+}
+
+.attendance-summary-col .col-title {
+  font-size: 0.6rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+}
+
+.attendance-summary-col .col-title-in {
+  color: #3b82f6;
+}
+.attendance-summary-col .col-title-rest {
+  color: #f59e0b;
+}
+.attendance-summary-col .col-title-out {
+  color: #ef4444;
+}
+.attendance-summary-col .col-title-total {
+  color: #10b981;
+}
+
+.attendance-summary-col .col-value {
+  font-size: 0.725rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Project site selector container */
+.attendance-task-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.01);
+}
+
+.attendance-task-title {
+  font-size: 0.725rem;
+  font-weight: 800;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.attendance-task-select {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background-color: #f8fafc;
+  color: #0f172a;
+  font-size: 0.825rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  padding-right: 2.25rem;
+}
+
+.attendance-task-select:focus {
+  border-color: var(--primary);
+  background-color: white;
+}
+
+/* Large Clock-In Fingerprint Button */
+.attendance-large-btn {
+  width: 100%;
+  border-radius: 20px;
+  padding: 1.25rem;
+  border: none;
+  cursor: pointer;
+  color: white;
+  font-weight: 800;
+  font-size: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+}
+
+.attendance-large-btn-in {
+  background-color: #1e70ff;
+  box-shadow: 0 10px 20px -3px rgba(30, 112, 255, 0.35);
+}
+.attendance-large-btn-in:hover {
+  background-color: #0d5ff0;
+  transform: translateY(-1px);
+}
+
+.attendance-large-btn-out {
+  background-color: #ef4444;
+  box-shadow: 0 10px 20px -3px rgba(239, 68, 68, 0.35);
+}
+.attendance-large-btn-out:hover {
+  background-color: #dc2626;
+  transform: translateY(-1px);
+}
+
+.attendance-large-btn-done {
+  background-color: #64748b;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.attendance-large-btn span {
+  letter-spacing: 0.02em;
+  font-weight: 700;
+}
