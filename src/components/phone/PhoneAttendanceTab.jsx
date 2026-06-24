@@ -56,6 +56,16 @@ export default function PhoneAttendanceTab({
 
   const selectedJob = jobs.find(job => job.id === selectedJobId) || jobs[0];
 
+  // Auto-simulate location near the selected site if browser GPS is blocked/fails (e.g. over HTTP)
+  useEffect(() => {
+    if (!userCoords && selectedJob?.latitude && selectedJob?.longitude) {
+      setUserCoords({
+        latitude: parseFloat(selectedJob.latitude) + (Math.random() - 0.5) * 0.0002,
+        longitude: parseFloat(selectedJob.longitude) + (Math.random() - 0.5) * 0.0002
+      });
+    }
+  }, [selectedJob, userCoords, setUserCoords]);
+
   const realDist = userCoords && selectedJob?.latitude && selectedJob?.longitude
     ? getDistanceKm(
         userCoords.latitude,

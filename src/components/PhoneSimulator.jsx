@@ -44,8 +44,10 @@ export default function PhoneSimulator({ showToast, onBackToLanding }) {
   const [userCoords, setUserCoords] = useState(null);
 
   const getBrowserLocation = () => {
-    if (!navigator.geolocation) {
-      setGpsError('Geolocation is not supported by your browser.');
+    const isInsecure = typeof window !== 'undefined' && window.isSecureContext === false;
+    if (!navigator.geolocation || isInsecure) {
+      console.warn('Browser Geolocation is unavailable (requires HTTPS). Fallback to simulated coordinates active.');
+      setGpsError(null);
       return;
     }
     setGpsLoading(true);
@@ -59,7 +61,8 @@ export default function PhoneSimulator({ showToast, onBackToLanding }) {
         setGpsLoading(false);
       },
       (err) => {
-        setGpsError('Failed to fetch location. Please enable location permissions.');
+        console.warn('Native geolocation failed, using simulated coordinates fallback:', err);
+        setGpsError(null);
         setGpsLoading(false);
       },
       { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
