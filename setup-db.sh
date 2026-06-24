@@ -30,9 +30,24 @@ run_cmd systemctl start mariadb
 DB_PASSWORD="my1p@ssw0rd"
 
 echo "--> Configuring database authentication and password..."
-# Set root password and enforce native password plugin for Node.js mysql2 compatibility
-run_cmd mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';"
-run_cmd mysql -e "FLUSH PRIVILEGES;"
+if run_cmd mysql -u root -e "use mysql;" >/dev/null 2>&1; then
+  echo "--> Configuring password for root user..."
+  run_cmd mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';"
+  run_cmd mysql -e "FLUSH PRIVILEGES;"
+elif run_cmd mysql -u root -p"${DB_PASSWORD}" -e "use mysql;" >/dev/null 2>&1; then
+  echo "--> Root password is already set to '${DB_PASSWORD}'. Skipping password configuration."
+else
+  echo "--> ERROR: Access denied. A root password might already be set and is different from '${DB_PASSWORD}'."
+  echo "    Please enter the CURRENT MariaDB root password to configure it:"
+  read -s -p "Current MariaDB root password: " CURRENT_DB_PASSWORD
+  echo ""
+  if run_cmd mysql -u root -p"${CURRENT_DB_PASSWORD}" -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_PASSWORD}'; FLUSH PRIVILEGES;" >/dev/null 2>&1; then
+    echo "--> Root password successfully updated to '${DB_PASSWORD}'."
+  else
+    echo "--> ERROR: Incorrect password. Database setup failed."
+    exit 1
+  fi
+fi
 
 echo "--> Creating database 'tn_parttime'..."
 run_cmd mysql -u root -p"${DB_PASSWORD}" -e "CREATE DATABASE IF NOT EXISTS tn_parttime;"
