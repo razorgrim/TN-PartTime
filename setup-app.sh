@@ -39,7 +39,7 @@ fi
 if [ ! -f .env ]; then
   echo "--> Creating default .env configuration..."
   cat <<EOT > .env
-PORT=5000
+PORT=5005
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
@@ -69,5 +69,5 @@ pm2 save
 
 echo "============================================="
 echo " Application deployment completed successfully! "
-echo " Access the web portal at: http://<your-server-ip>:5000 "
+echo " Access the web portal at: http://<your-server-ip>:5005 "
 echo "============================================="
