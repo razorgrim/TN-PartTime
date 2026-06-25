@@ -118,25 +118,7 @@ export default function PhoneSimulator({ showToast, onBackToLanding }) {
       borderLeft: '1px solid var(--border-color)',
       borderRight: '1px solid var(--border-color)'
     }}>
-      {/* Phone Status Bar */}
-      <div style={{
-        height: '24px',
-        backgroundColor: '#f8fafc',
-        borderBottom: '1px solid var(--border-color)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '0 1rem',
-        fontSize: '0.75rem',
-        color: 'var(--text-secondary)',
-        fontWeight: 600
-      }}>
-        <span>{simulatedTime}</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Wifi size={12} />
-          <Battery size={14} />
-        </div>
-      </div>
+
 
       {/* Screen Area */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingBottom: '80px', overflowY: 'auto' }}>
