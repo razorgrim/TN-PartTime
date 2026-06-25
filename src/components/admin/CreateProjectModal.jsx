@@ -17,7 +17,7 @@ export default function CreateProjectModal({ onClose, addJob, showToast }) {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskLocation, setNewTaskLocation] = useState('');
-  const [newTaskPayRate, setNewTaskPayRate] = useState('');
+  const [newTaskPayRate, setNewTaskPayRate] = useState('0.00');
   const [newTaskDate, setNewTaskDate] = useState('');
   const [newTaskStartTime, setNewTaskStartTime] = useState('');
   const [newTaskEndTime, setNewTaskEndTime] = useState('');
@@ -111,10 +111,6 @@ export default function CreateProjectModal({ onClose, addJob, showToast }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isNaN(newTaskPayRate) || parseFloat(newTaskPayRate) <= 0) {
-      showToast('Please enter a valid hourly rate.', 'error');
-      return;
-    }
     if (pinnedLat === null || pinnedLng === null) {
       showToast('Please pin the exact project location on the map.', 'error');
       return;
@@ -249,28 +245,15 @@ export default function CreateProjectModal({ onClose, addJob, showToast }) {
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div className="form-group">
-                <label className="form-label">Flat Job Rate (RM)</label>
-                <input 
-                  type="number" 
-                  className="form-input" 
-                  placeholder="e.g. 150"
-                  value={newTaskPayRate}
-                  onChange={(e) => setNewTaskPayRate(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Scheduled Date</label>
-                <input 
-                  type="date" 
-                  className="form-input" 
-                  value={newTaskDate}
-                  onChange={(e) => setNewTaskDate(e.target.value)}
-                  required
-                />
-              </div>
+            <div className="form-group">
+              <label className="form-label">Scheduled Date</label>
+              <input 
+                type="date" 
+                className="form-input" 
+                value={newTaskDate}
+                onChange={(e) => setNewTaskDate(e.target.value)}
+                required
+              />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

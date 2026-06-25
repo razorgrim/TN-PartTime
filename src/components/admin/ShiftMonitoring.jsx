@@ -129,7 +129,6 @@ export default function ShiftMonitoring({ shifts, clearShifts, showToast }) {
                     ) : (
                       <div>
                         <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Working...</span>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>Job Rate: RM {shift.payRate}.00</div>
                       </div>
                     )}
                   </td>

@@ -50,7 +50,7 @@ export default function EditProjectModal({ job, onClose, onSave, showToast }) {
   const [editJobTitle, setEditJobTitle] = useState(job.title || '');
   const [editJobDescription, setEditJobDescription] = useState(job.description || '');
   const [editJobLocation, setEditJobLocation] = useState(job.locationName || '');
-  const [editJobPayRate, setEditJobPayRate] = useState(job.payRate || '');
+  const [editJobPayRate, setEditJobPayRate] = useState(job.payRate || '0.00');
   const [editJobDate, setEditJobDate] = useState(job.date || '');
   const [editJobStartTime, setEditJobStartTime] = useState(parsed.startTime || '');
   const [editJobEndTime, setEditJobEndTime] = useState(parsed.endTime || '');
@@ -154,10 +154,6 @@ export default function EditProjectModal({ job, onClose, onSave, showToast }) {
     }
     if (!editJobLocation.trim()) {
       showToast('Location is required.', 'error');
-      return;
-    }
-    if (isNaN(editJobPayRate) || parseFloat(editJobPayRate) <= 0) {
-      showToast('Please enter a valid pay rate.', 'error');
       return;
     }
     if (!editJobDate) {
@@ -300,27 +296,15 @@ export default function EditProjectModal({ job, onClose, onSave, showToast }) {
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div className="form-group">
-                <label className="form-label">Rate (RM)</label>
-                <input 
-                  type="number" 
-                  className="form-input" 
-                  value={editJobPayRate}
-                  onChange={(e) => setEditJobPayRate(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Scheduled Date</label>
-                <input 
-                  type="date" 
-                  className="form-input" 
-                  value={editJobDate}
-                  onChange={(e) => setEditJobDate(e.target.value)}
-                  required
-                />
-              </div>
+            <div className="form-group">
+              <label className="form-label">Scheduled Date</label>
+              <input 
+                type="date" 
+                className="form-input" 
+                value={editJobDate}
+                onChange={(e) => setEditJobDate(e.target.value)}
+                required
+              />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

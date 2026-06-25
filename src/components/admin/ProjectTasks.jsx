@@ -35,7 +35,6 @@ export default function ProjectTasks({
           <thead>
             <tr>
               <th>Task Title & Site Location</th>
-              <th>Flat Job Rate</th>
               <th>Scheduled At</th>
               <th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
@@ -43,7 +42,7 @@ export default function ProjectTasks({
           <tbody>
             {jobs.length === 0 ? (
               <tr>
-                <td colSpan="4" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                <td colSpan="3" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
                   No project tasks scheduled yet. Create one above!
                 </td>
               </tr>
@@ -61,9 +60,7 @@ export default function ProjectTasks({
                       <MapPin size={12} /> {job.locationName}
                     </div>
                   </td>
-                  <td>
-                    <strong style={{ color: 'var(--primary)' }}>RM {Number(job.payRate).toFixed(2)}</strong>
-                  </td>
+
                   <td style={{ fontSize: '0.85rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <Calendar size={12} /> {job.date}
