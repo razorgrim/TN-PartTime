@@ -241,6 +241,7 @@ export default function PhoneSimulator({ showToast, onBackToLanding }) {
                   <PhoneClaimsTab 
                     partTimerSession={partTimerSession} 
                     shifts={shifts} 
+                    showToast={showToast}
                   />
                 )}
 

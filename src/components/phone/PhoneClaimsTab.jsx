@@ -20,8 +20,8 @@ const parseLocalDate = (dateStr) => {
   return new Date(year, month - 1, day);
 };
 
-export default function PhoneClaimsTab({ partTimerSession, shifts }) {
-  const { adjustShiftPayout, showToast } = useContext(AppContext);
+export default function PhoneClaimsTab({ partTimerSession, shifts, showToast }) {
+  const { adjustShiftPayout } = useContext(AppContext);
   const [selectedClaimIds, setSelectedClaimIds] = useState([]);
 
   const ptShifts = shifts.filter(s => s.workerId === partTimerSession?.id);
