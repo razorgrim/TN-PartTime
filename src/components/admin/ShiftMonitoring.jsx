@@ -50,13 +50,12 @@ export default function ShiftMonitoring({ shifts, clearShifts, showToast }) {
               <th>Status</th>
               <th>Check In / Out Details</th>
               <th>Work Duration</th>
-              <th>Approved Payout</th>
             </tr>
           </thead>
           <tbody>
             {shifts.length === 0 ? (
               <tr>
-                <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
                   No shifts recorded yet. Staff will appear here once they clock in.
                 </td>
               </tr>
@@ -109,29 +108,7 @@ export default function ShiftMonitoring({ shifts, clearShifts, showToast }) {
                   <td style={{ fontWeight: 600 }}>
                     {shift.status === 'completed' ? formatDuration(shift.durationMinutes) : 'Working...'}
                   </td>
-                  <td>
-                    {shift.status === 'completed' ? (
-                      <div>
-                        <strong>RM {Number(shift.payout || shift.payRate).toFixed(2)}</strong>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                          <span>Claim:</span>
-                          {shift.claimStatus === 'approved' ? (
-                            <span className="badge badge-enabled" style={{ fontSize: '0.55rem', padding: '0px 6px', height: '16px', display: 'inline-flex', alignItems: 'center' }}>
-                              Approved
-                            </span>
-                          ) : (
-                            <span className="badge badge-pending" style={{ fontSize: '0.55rem', padding: '0px 6px', height: '16px', display: 'inline-flex', alignItems: 'center' }}>
-                              Pending
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Working...</span>
-                      </div>
-                    )}
-                  </td>
+
                 </tr>
               ))
             )}
