@@ -217,22 +217,20 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
           </select>
         </div>
       </div>
-
       <div className="table-wrapper">
         <table className="admin-table">
           <thead>
             <tr>
               <th>Date & Consolidated Site Details</th>
-              <th style={{ width: '40%' }}>Clock In / Out Details per Site</th>
-              <th>Daily Rate (RM)</th>
-              <th>Approved Payout (RM)</th>
+              <th style={{ width: '45%' }}>Clock In / Out Details per Site</th>
+              <th>Daily Payout (RM)</th>
               <th style={{ textAlign: 'right' }}>Actions & Status</th>
             </tr>
           </thead>
           <tbody>
             {filteredClaims.length === 0 ? (
               <tr>
-                <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                <td colSpan="4" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
                   No completed claims found for this staff member matching filter.
                 </td>
               </tr>
@@ -243,7 +241,12 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
                     <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
                       {new Date(claim.date + 'T00:00:00').toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                     </div>
-                    <div style={{ fontWeight: 500, fontSize: '0.8rem', marginTop: '4px' }}>{claim.jobTitle}</div>
+                    <div style={{ marginTop: '6px', marginBottom: '8px' }}>
+                      <span className="badge" style={{ backgroundColor: '#eff6ff', color: '#1e40af', borderColor: '#bfdbfe', fontSize: '0.7rem', padding: '3px 8px', fontWeight: 700 }}>
+                        {claim.shifts.length} {claim.shifts.length === 1 ? 'Site Visited' : 'Sites Visited'}
+                      </span>
+                    </div>
+                    <div style={{ fontWeight: 600, fontSize: '0.8rem' }}>{claim.jobTitle}</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{claim.locationName}</div>
                   </td>
                   <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
@@ -267,16 +270,7 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
                     <input 
                       type="number" 
                       className="form-input" 
-                      style={{ padding: '4px 8px', fontSize: '0.85rem', width: '80px', height: '28px' }}
-                      defaultValue={claim.payRate}
-                      id={`rate-${claim.id}`}
-                    />
-                  </td>
-                  <td>
-                    <input 
-                      type="number" 
-                      className="form-input" 
-                      style={{ padding: '4px 8px', fontSize: '0.85rem', width: '80px', height: '28px', fontWeight: 'bold' }}
+                      style={{ padding: '4px 8px', fontSize: '0.85rem', width: '90px', height: '28px', fontWeight: 'bold' }}
                       defaultValue={claim.payout}
                       id={`payout-${claim.id}`}
                     />
@@ -287,19 +281,18 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
                         className="btn btn-primary btn-sm"
                         style={{ height: '28px', padding: '0 12px', fontSize: '0.75rem' }}
                         onClick={async () => {
-                          const rateVal = parseFloat(document.getElementById(`rate-${claim.id}`).value);
                           const payoutVal = parseFloat(document.getElementById(`payout-${claim.id}`).value);
-                          if (!isNaN(rateVal) && !isNaN(payoutVal)) {
-                            // Approve all shifts on this day
+                          if (!isNaN(payoutVal)) {
+                            // Approve all shifts on this day, assigning the payout value to the first shift
                             for (let i = 0; i < claim.shifts.length; i++) {
                               const shift = claim.shifts[i];
-                              const targetRate = i === 0 ? rateVal : 0;
+                              const targetRate = i === 0 ? payoutVal : 0;
                               const targetPayout = i === 0 ? payoutVal : 0;
                               await adjustShiftPayout(shift.id, targetRate, targetPayout, true);
                             }
-                            showToast("Daily claim updated and approved successfully", "success");
+                            showToast("Daily claim payout updated and approved successfully", "success");
                           } else {
-                            showToast("Please enter valid numbers", "error");
+                            showToast("Please enter a valid payout number", "error");
                           }
                         }}
                       >
