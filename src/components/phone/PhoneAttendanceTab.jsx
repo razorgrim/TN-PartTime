@@ -45,6 +45,92 @@ const isSameDate = (isoString, dateStr) => {
   return `${y}-${m}-${d}` === dateStr;
 };
 
+const parseJobScheduleTimes = (timeStr) => {
+  if (!timeStr) return { start: null, end: null };
+  const parts = timeStr.split('-').map(s => s.trim());
+  if (parts.length < 2) return { start: null, end: null };
+  return { start: parts[0], end: parts[1] };
+};
+
+const getScheduledDateTime = (dateStr, timeStr) => {
+  if (!dateStr || !timeStr) return null;
+  const timeRegex = /(\d+):(\d+)\s*(AM|PM)?/i;
+  const match = timeStr.match(timeRegex);
+  if (!match) return null;
+  
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  const ampm = match[3];
+  
+  if (ampm) {
+    if (ampm.toUpperCase() === 'PM' && hours < 12) {
+      hours += 12;
+    } else if (ampm.toUpperCase() === 'AM' && hours === 12) {
+      hours = 0;
+    }
+  }
+  
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day, hours, minutes, 0, 0);
+};
+
+const getClockInDifference = (actualClockInStr, scheduledDateStr, scheduledTimeRangeStr) => {
+  if (!actualClockInStr || !scheduledDateStr || !scheduledTimeRangeStr) return null;
+  const { start } = parseJobScheduleTimes(scheduledTimeRangeStr);
+  if (!start) return null;
+  
+  const scheduledStart = getScheduledDateTime(scheduledDateStr, start);
+  if (!scheduledStart) return null;
+  
+  const actualStart = new Date(actualClockInStr);
+  const diffMs = actualStart.getTime() - scheduledStart.getTime();
+  return Math.round(diffMs / (60 * 1000)); // Positive means late, negative means early
+};
+
+const formatClockInDifference = (diffMins) => {
+  if (diffMins === null) return '';
+  if (diffMins > 0) {
+    if (diffMins >= 60) {
+      const hrs = Math.floor(diffMins / 60);
+      const mins = diffMins % 60;
+      return `late ${hrs} hour${hrs > 1 ? 's' : ''}${mins > 0 ? ` ${mins} minute${mins > 1 ? 's' : ''}` : ''}`;
+    }
+    return `late ${diffMins} minutes`;
+  } else if (diffMins < 0) {
+    const absMins = Math.abs(diffMins);
+    if (absMins >= 60) {
+      const hrs = Math.floor(absMins / 60);
+      const mins = absMins % 60;
+      return `early ${hrs} hour${hrs > 1 ? 's' : ''}${mins > 0 ? ` ${mins} minute${mins > 1 ? 's' : ''}` : ''}`;
+    }
+    return `early ${absMins} minutes`;
+  }
+  return 'on time';
+};
+
+const getClockOutDifference = (actualClockOutStr, scheduledDateStr, scheduledTimeRangeStr) => {
+  if (!actualClockOutStr || !scheduledDateStr || !scheduledTimeRangeStr) return null;
+  const { end } = parseJobScheduleTimes(scheduledTimeRangeStr);
+  if (!end) return null;
+  
+  const scheduledEnd = getScheduledDateTime(scheduledDateStr, end);
+  if (!scheduledEnd) return null;
+  
+  const actualEnd = new Date(actualClockOutStr);
+  const diffMs = scheduledEnd.getTime() - actualEnd.getTime(); // scheduled - actual
+  return Math.round(diffMs / (60 * 1000)); // Positive means early clock out
+};
+
+const formatClockOutDifference = (diffMins) => {
+  if (diffMins === null || diffMins <= 0) return '';
+  if (diffMins >= 60) {
+    const hrs = Math.floor(diffMins / 60);
+    const mins = diffMins % 60;
+    return `clock out ${hrs} hour${hrs > 1 ? 's' : ''}${mins > 0 ? ` ${mins} minute${mins > 1 ? 's' : ''}` : ''} early`;
+  }
+  return `clock out ${diffMins} minutes early`;
+};
+
 export default function PhoneAttendanceTab({
   partTimerSession,
   jobs,
@@ -108,6 +194,40 @@ export default function PhoneAttendanceTab({
 
   // Check if user has an active shift on ANY job
   const anyActiveShift = shifts.find(s => s.workerId === partTimerSession?.id && s.status === 'active');
+
+  const activeShift = userJobActiveShift || userJobCompletedShift;
+  const clockInDiff = (selectedJob && activeShift)
+    ? getClockInDifference(activeShift.clockInTime, selectedJob.date, selectedJob.time)
+    : null;
+  const clockInStatus = formatClockInDifference(clockInDiff);
+
+  const clockOutDiff = (selectedJob && userJobCompletedShift)
+    ? getClockOutDifference(userJobCompletedShift.clockOutTime, selectedJob.date, selectedJob.time)
+    : null;
+  const clockOutStatus = formatClockOutDifference(clockOutDiff);
+
+  const getSimulationOrRealTime = () => {
+    if (!simulatedDate) return new Date().toISOString();
+    const now = new Date();
+    const offsetMin = now.getTimezoneOffset();
+    const offsetSign = offsetMin <= 0 ? '+' : '-';
+    const absOffsetMin = Math.abs(offsetMin);
+    const offsetHours = String(Math.floor(absOffsetMin / 60)).padStart(2, '0');
+    const offsetMins = String(absOffsetMin % 60).padStart(2, '0');
+    const tzOffset = `${offsetSign}${offsetHours}:${offsetMins}`;
+
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const ms = String(now.getMilliseconds()).padStart(3, '0');
+    
+    return `${simulatedDate}T${hours}:${minutes}:${seconds}.${ms}${tzOffset}`;
+  };
+
+  const currentOutDiff = (selectedJob && userJobActiveShift)
+    ? getClockOutDifference(getSimulationOrRealTime(), selectedJob.date, selectedJob.time)
+    : null;
+  const currentOutStatus = formatClockOutDifference(currentOutDiff);
 
   // Leaflet map setup
   useEffect(() => {
@@ -509,6 +629,18 @@ export default function PhoneAttendanceTab({
                 ? formatTime(userJobActiveShift.clockInTime)
                 : (userJobCompletedShift ? formatTime(userJobCompletedShift.clockInTime) : '--:--')}
             </span>
+            {clockInStatus && (
+              <span style={{ 
+                display: 'block', 
+                fontSize: '0.6rem', 
+                marginTop: '3px', 
+                fontWeight: 600, 
+                color: clockInDiff > 0 ? '#dc2626' : '#059669',
+                lineHeight: '1.2'
+              }}>
+                {clockInStatus}
+              </span>
+            )}
           </div>
           <div className="attendance-summary-col">
             <span className="col-title col-title-rest">Rest</span>
@@ -517,6 +649,18 @@ export default function PhoneAttendanceTab({
           <div className="attendance-summary-col">
             <span className="col-title col-title-out">Out</span>
             <span className="col-value">{userJobCompletedShift ? formatTime(userJobCompletedShift.clockOutTime) : '--:--'}</span>
+            {clockOutStatus && (
+              <span style={{ 
+                display: 'block', 
+                fontSize: '0.6rem', 
+                marginTop: '3px', 
+                fontWeight: 600, 
+                color: '#dc2626',
+                lineHeight: '1.2'
+              }}>
+                {clockOutStatus}
+              </span>
+            )}
           </div>
           <div className="attendance-summary-col">
             <span className="col-title col-title-total">Total</span>
@@ -625,13 +769,35 @@ export default function PhoneAttendanceTab({
               )
             )}
             {userJobActiveShift && (
-              <button
-                className="attendance-large-btn attendance-large-btn-out animate-scale"
-                onClick={() => handleClockOut(selectedJob.id)}
-              >
-                <Fingerprint size={28} />
-                <span>CLOCK OUT</span>
-              </button>
+              <>
+                {currentOutStatus && (
+                  <div className="animate-scale" style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    backgroundColor: '#fee2e2',
+                    border: '1px solid #fca5a5',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    marginBottom: '0.75rem',
+                    fontSize: '0.75rem',
+                    color: '#991b1b',
+                    fontWeight: 500,
+                    lineHeight: '1.3',
+                    textAlign: 'left'
+                  }}>
+                    <Clock size={16} style={{ color: '#ef4444', flexShrink: 0 }} />
+                    <span>Warning: Clocking out now will be recorded as <strong>{currentOutStatus}</strong>.</span>
+                  </div>
+                )}
+                <button
+                  className="attendance-large-btn attendance-large-btn-out animate-scale"
+                  onClick={() => handleClockOut(selectedJob.id)}
+                >
+                  <Fingerprint size={28} />
+                  <span>CLOCK OUT</span>
+                </button>
+              </>
             )}
             {(userJobCompletedShift && !userJobActiveShift) && (
               <button
