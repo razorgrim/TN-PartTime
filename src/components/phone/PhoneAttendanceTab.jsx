@@ -399,92 +399,92 @@ export default function PhoneAttendanceTab({
                   </div>
                 </div>
 
-                {/* Status Badges 
+                {/* Status Badges */}
                 <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.15rem' }}>
                   <span style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 700 }}>
                     RM {Number(selectedJob?.payRate || 0).toFixed(2)} / Job
-                  </span>*/}
+                  </span>
 
-                {distanceMeters !== null ? (
-                  <span style={{
-                    backgroundColor: distanceMeters <= 120 ? '#d1fae5' : '#fee2e2',
-                    color: distanceMeters <= 120 ? '#065f46' : '#991b1b',
-                    padding: '3px 8px',
-                    borderRadius: '6px',
-                    fontSize: '0.65rem',
-                    fontWeight: 700,
-                    border: `1px solid ${distanceMeters <= 120 ? '#a7f3d0' : '#fca5a5'}`
-                  }}>
-                    GPS: {distanceMeters}m {distanceMeters <= 120 ? '(In Range)' : '(Out of Range)'}
-                  </span>
-                ) : (
-                  <span style={{ backgroundColor: '#f1f5f9', color: '#475569', padding: '3px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 700 }}>
-                    No GPS Signal
-                  </span>
-                )}
+                  {distanceMeters !== null ? (
+                    <span style={{
+                      backgroundColor: distanceMeters <= 120 ? '#d1fae5' : '#fee2e2',
+                      color: distanceMeters <= 120 ? '#065f46' : '#991b1b',
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                      border: `1px solid ${distanceMeters <= 120 ? '#a7f3d0' : '#fca5a5'}`
+                    }}>
+                      GPS: {distanceMeters}m {distanceMeters <= 120 ? '(In Range)' : '(Out of Range)'}
+                    </span>
+                  ) : (
+                    <span style={{ backgroundColor: '#f1f5f9', color: '#475569', padding: '3px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 700 }}>
+                      No GPS Signal
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
 
-          {selectedJob?.description && (
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.5rem', padding: '6px 8px', backgroundColor: '#f8fafc', borderRadius: '8px', borderLeft: '3px solid var(--primary)', lineHeight: '1.4' }}>
-              <strong style={{ color: 'var(--text-primary)', display: 'block', fontSize: '0.7rem', marginBottom: '2px', fontWeight: 700 }}>Task Description:</strong>
-              {selectedJob.description}
+              {selectedJob?.description && (
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.5rem', padding: '6px 8px', backgroundColor: '#f8fafc', borderRadius: '8px', borderLeft: '3px solid var(--primary)', lineHeight: '1.4' }}>
+                  <strong style={{ color: 'var(--text-primary)', display: 'block', fontSize: '0.7rem', marginBottom: '2px', fontWeight: 700 }}>Task Description:</strong>
+                  {selectedJob.description}
+                </div>
+              )}
+            </>
+          ) : (
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', padding: '0.5rem 0' }}>
+              No active project tasks available.
             </div>
-          )}
-        </>
-        ) : (
-        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', padding: '0.5rem 0' }}>
-          No active project tasks available.
-        </div>
-          )}
-      </div>
-
-      {/* Large Fingerprint Button */}
-      {selectedJob ? (
-        <div style={{ marginBottom: '1.5rem' }}>
-          {(!userJobActiveShift && !userJobCompletedShift) && (
-            <button
-              className="attendance-large-btn attendance-large-btn-in animate-scale"
-              onClick={() => handleClockIn(selectedJob.id)}
-            >
-              <Fingerprint size={28} />
-              <span>CLOCK IN</span>
-            </button>
-          )}
-          {userJobActiveShift && (
-            <button
-              className="attendance-large-btn attendance-large-btn-out animate-scale"
-              onClick={() => handleClockOut(selectedJob.id)}
-            >
-              <Fingerprint size={28} />
-              <span>CLOCK OUT</span>
-            </button>
-          )}
-          {(userJobCompletedShift && !userJobActiveShift) && (
-            <button
-              className="attendance-large-btn attendance-large-btn-done animate-scale"
-              disabled
-            >
-              <CheckCircle2 size={28} />
-              <span>COMPLETED</span>
-            </button>
           )}
         </div>
-      ) : null}
 
-      {/* Real GPS Refresh Button */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem', marginBottom: '2rem' }}>
-        <button
-          type="button"
-          className="btn btn-secondary btn-sm"
-          onClick={getBrowserLocation}
-          style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-        >
-          <MapPin size={12} />
-          <span>Refresh GPS Location</span>
-        </button>
+        {/* Large Fingerprint Button */}
+        {selectedJob ? (
+          <div style={{ marginBottom: '1.5rem' }}>
+            {(!userJobActiveShift && !userJobCompletedShift) && (
+              <button
+                className="attendance-large-btn attendance-large-btn-in animate-scale"
+                onClick={() => handleClockIn(selectedJob.id)}
+              >
+                <Fingerprint size={28} />
+                <span>CLOCK IN</span>
+              </button>
+            )}
+            {userJobActiveShift && (
+              <button
+                className="attendance-large-btn attendance-large-btn-out animate-scale"
+                onClick={() => handleClockOut(selectedJob.id)}
+              >
+                <Fingerprint size={28} />
+                <span>CLOCK OUT</span>
+              </button>
+            )}
+            {(userJobCompletedShift && !userJobActiveShift) && (
+              <button
+                className="attendance-large-btn attendance-large-btn-done animate-scale"
+                disabled
+              >
+                <CheckCircle2 size={28} />
+                <span>COMPLETED</span>
+              </button>
+            )}
+          </div>
+        ) : null}
+
+        {/* Real GPS Refresh Button */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem', marginBottom: '2rem' }}>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={getBrowserLocation}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            <MapPin size={12} />
+            <span>Refresh GPS Location</span>
+          </button>
+        </div>
       </div>
     </div>
-    </div >
   );
 }
