@@ -6,6 +6,7 @@ export const AppProvider = ({ children }) => {
   const [users, setUsers] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [shifts, setShifts] = useState([]);
+  const [claims, setClaims] = useState([]);
   const isFetchingRef = useRef(false);
 
   const [adminSession, setAdminSession] = useState(() => {
@@ -42,10 +43,11 @@ export const AppProvider = ({ children }) => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
     try {
-      const [usersRes, jobsRes, shiftsRes] = await Promise.all([
+      const [usersRes, jobsRes, shiftsRes, claimsRes] = await Promise.all([
         fetch('/api/users'),
         fetch('/api/jobs'),
-        fetch('/api/shifts')
+        fetch('/api/shifts'),
+        fetch('/api/claims')
       ]);
 
       if (usersRes.ok) {
@@ -59,6 +61,10 @@ export const AppProvider = ({ children }) => {
       if (shiftsRes.ok) {
         const shiftsData = await shiftsRes.json();
         setShifts(shiftsData);
+      }
+      if (claimsRes.ok) {
+        const claimsData = await claimsRes.json();
+        setClaims(claimsData);
       }
     } catch (e) {
       console.error("Error fetching initial database data:", e);
@@ -334,20 +340,20 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // Adjust completed shift payout details
-  const adjustShiftPayout = async (shiftId, newRate, newPayout, approve = false, claimStatus = null) => {
+  // Adjust completed daily claim details
+  const adjustClaim = async (claimId, newRate, newPayout, status = null) => {
     try {
-      const res = await fetch(`/api/shifts/${shiftId}/payout`, {
+      const res = await fetch(`/api/claims/${claimId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payRate: newRate, payout: newPayout, approve, claimStatus })
+        body: JSON.stringify({ payRate: newRate, payout: newPayout, status })
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setShifts(prev => prev.map(s => s.id === shiftId ? data.shift : s));
-        return { success: true, shift: data.shift };
+        setClaims(prev => prev.map(c => c.id === claimId ? data.claim : c));
+        return { success: true, claim: data.claim };
       }
-      return { success: false, message: data.error || 'Failed to update shift payout.' };
+      return { success: false, message: data.error || 'Failed to update claim details.' };
     } catch (error) {
       console.error(error);
       return { success: false, message: 'Failed to connect to backend server.' };
@@ -450,9 +456,10 @@ export const AppProvider = ({ children }) => {
       getICLast4,
       jobs,
       shifts,
+      claims,
       clockInJob,
       clockOutJob,
-      adjustShiftPayout,
+      adjustClaim,
       resetDatabase,
       addStaff,
       deleteStaff,

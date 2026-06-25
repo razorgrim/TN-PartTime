@@ -21,11 +21,12 @@ export default function AdminDashboard({ showToast, onBackToLanding }) {
     toggleUserStatus, 
     jobs,
     shifts,
+    claims,
     addStaff,
     deleteStaff,
     addJob,
     deleteJob,
-    adjustShiftPayout,
+    adjustClaim,
     updateStaff,
     updateJob,
     clearShifts
@@ -64,7 +65,7 @@ export default function AdminDashboard({ showToast, onBackToLanding }) {
   const totalPT = partTimers.length;
   const pendingPT = partTimers.filter(u => u.status === 'pending').length;
   const activeShiftsCount = shifts.filter(s => s.status === 'active').length;
-  const pendingClaimsCount = shifts.filter(s => s.status === 'completed' && s.claimStatus === 'pending').length;
+  const pendingClaimsCount = claims.filter(c => c.status === 'pending').length;
 
   if (!adminSession) {
     return (
@@ -180,7 +181,8 @@ export default function AdminDashboard({ showToast, onBackToLanding }) {
         <ClaimsManager 
           users={users} 
           shifts={shifts} 
-          adjustShiftPayout={adjustShiftPayout} 
+          claims={claims}
+          adjustClaim={adjustClaim} 
           showToast={showToast} 
         />
       )}

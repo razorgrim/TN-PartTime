@@ -19,7 +19,7 @@ const parseLocalDate = (dateStr) => {
   return new Date(year, month - 1, day);
 };
 
-export default function ClaimsManager({ users, shifts, adjustShiftPayout, showToast }) {
+export default function ClaimsManager({ users, shifts, claims, adjustClaim, showToast }) {
   const [selectedClaimStaffId, setSelectedClaimStaffId] = useState(null);
   const [claimSearchQuery, setClaimSearchQuery] = useState('');
   const [claimStatusFilter, setClaimStatusFilter] = useState('all');
@@ -56,7 +56,7 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Claim_Form_${(selectedUser?.name || 'Staff').replace(/\\s+/g, '_')}_${new Date().toISOString().substring(0, 10)}.html`;
+    a.download = `Claim_Form_${(selectedUser?.name || 'Staff').replace(/\s+/g, '_')}_${new Date().toISOString().substring(0, 10)}.html`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -64,58 +64,19 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
     showToast("Claim form downloaded successfully!", "success");
   };
 
-  const getDailyClaims = (workerShifts) => {
-    const groups = {};
-    workerShifts.forEach(shift => {
-      const dateStr = shift.clockInTime.substring(0, 10);
-      if (!groups[dateStr]) {
-        groups[dateStr] = {
-          date: dateStr,
-          shifts: [],
-          jobTitles: [],
-          locations: [],
-          totalDuration: 0,
-        };
-      }
-      groups[dateStr].shifts.push(shift);
-      if (!groups[dateStr].jobTitles.includes(shift.jobTitle)) {
-        groups[dateStr].jobTitles.push(shift.jobTitle);
-      }
-      if (!groups[dateStr].locations.includes(shift.locationName)) {
-        groups[dateStr].locations.push(shift.locationName);
-      }
-      groups[dateStr].totalDuration += (shift.durationMinutes || 0);
-    });
-
-    return Object.values(groups).map(group => {
-      group.shifts.sort((a, b) => new Date(a.clockInTime) - new Date(b.clockInTime));
+  const getWorkerClaims = (workerId, workerShifts) => {
+    const workerClaims = claims.filter(c => c.workerId === workerId);
+    return workerClaims.map(claim => {
+      const claimShifts = workerShifts.filter(s => s.claimId === claim.id);
+      claimShifts.sort((a, b) => new Date(a.clockInTime) - new Date(b.clockInTime));
       
-      // Resolve daily status
-      const statuses = group.shifts.map(s => s.claimStatus || 'pending');
-      let finalStatus = 'paid';
-      if (statuses.includes('pending')) {
-        finalStatus = 'pending';
-      } else if (statuses.includes('approved')) {
-        finalStatus = 'approved';
-      } else if (statuses.includes('submitted')) {
-        finalStatus = 'submitted';
-      }
-
-      const hasPayout = group.shifts.some(s => s.payout !== null);
-      const totalPayout = hasPayout
-        ? group.shifts.reduce((sum, s) => sum + parseFloat(s.payout || 0), 0)
-        : 100.00;
-
       return {
-        id: `daily-${group.date}`,
-        date: group.date,
-        jobTitle: group.jobTitles.join(' + '),
-        locationName: group.locations.join('; '),
-        payRate: 100.00,
-        payout: totalPayout,
-        claimStatus: finalStatus,
-        durationMinutes: group.totalDuration,
-        shifts: group.shifts
+        ...claim,
+        jobTitle: claimShifts.map(s => s.jobTitle).join(' + ') || 'No Shifts',
+        locationName: claimShifts.map(s => s.locationName).join('; ') || 'No Location',
+        durationMinutes: claimShifts.reduce((sum, s) => sum + (s.durationMinutes || 0), 0),
+        claimStatus: claim.status,
+        shifts: claimShifts
       };
     });
   };
@@ -153,7 +114,7 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
               ) : (
                 users.filter(u => u.role === 'part-timer').map(pt => {
                   const staffShifts = shifts.filter(s => s.status === 'completed' && s.workerId === pt.id);
-                  const dailyClaims = getDailyClaims(staffShifts);
+                  const dailyClaims = getWorkerClaims(pt.id, staffShifts);
                   const total = dailyClaims.length;
                   const pending = dailyClaims.filter(c => c.claimStatus === 'pending').length;
                   const approved = dailyClaims.filter(c => c.claimStatus === 'approved').length;
@@ -221,7 +182,7 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
   // Detail View: Claims of selected staff member
   const selectedUser = users.find(u => u.id === selectedClaimStaffId);
   const rawStaffShifts = shifts.filter(s => s.status === 'completed' && s.workerId === selectedClaimStaffId);
-  const staffDailyClaims = getDailyClaims(rawStaffShifts);
+  const staffDailyClaims = getWorkerClaims(selectedClaimStaffId, rawStaffShifts);
   const filteredClaims = staffDailyClaims.filter(c => {
     const matchesSearch = c.jobTitle.toLowerCase().includes(claimSearchQuery.toLowerCase()) || c.locationName.toLowerCase().includes(claimSearchQuery.toLowerCase());
     const matchesStatus = claimStatusFilter === 'all' || c.claimStatus === claimStatusFilter;
@@ -400,9 +361,7 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
                           className="btn btn-primary btn-sm"
                           style={{ height: '28px', padding: '0 12px', fontSize: '0.75rem', backgroundColor: '#10b981', borderColor: '#059669' }}
                           onClick={async () => {
-                            for (const shift of claim.shifts) {
-                              await adjustShiftPayout(shift.id, shift.payRate, shift.payout, false, 'paid');
-                            }
+                            await adjustClaim(claim.id, claim.payRate, claim.payout, 'paid');
                             showToast("Daily claim payout processed and marked as Paid successfully", "success");
                           }}
                         >
@@ -416,12 +375,7 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
                             onClick={async () => {
                               const payoutVal = parseFloat(document.getElementById(`payout-${claim.id}`).value);
                               if (!isNaN(payoutVal)) {
-                                for (let i = 0; i < claim.shifts.length; i++) {
-                                  const shift = claim.shifts[i];
-                                  const targetRate = i === 0 ? payoutVal : 0;
-                                  const targetPayout = i === 0 ? payoutVal : 0;
-                                  await adjustShiftPayout(shift.id, targetRate, targetPayout, true);
-                                }
+                                await adjustClaim(claim.id, claim.payRate, payoutVal, 'approved');
                                 showToast("Daily claim payout updated and approved successfully", "success");
                               } else {
                                 showToast("Please enter a valid payout number", "error");
@@ -441,12 +395,7 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
                           onClick={async () => {
                             const payoutVal = parseFloat(document.getElementById(`payout-${claim.id}`).value);
                             if (!isNaN(payoutVal)) {
-                              for (let i = 0; i < claim.shifts.length; i++) {
-                                const shift = claim.shifts[i];
-                                const targetRate = i === 0 ? payoutVal : 0;
-                                const targetPayout = i === 0 ? payoutVal : 0;
-                                await adjustShiftPayout(shift.id, targetRate, targetPayout, true);
-                              }
+                              await adjustClaim(claim.id, claim.payRate, payoutVal, 'approved');
                               showToast("Daily claim payout approved successfully", "success");
                             } else {
                               showToast("Please enter a valid payout number", "error");
@@ -529,9 +478,7 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
                 {modalClaim.claimStatus === 'submitted' && (
                   <button
                     onClick={async () => {
-                      for (const shift of modalClaim.shifts) {
-                        await adjustShiftPayout(shift.id, shift.payRate, shift.payout, false, 'paid');
-                      }
+                      await adjustClaim(modalClaim.id, modalClaim.payRate, modalClaim.payout, 'paid');
                       showToast("Daily claim payout processed and marked as Paid successfully", "success");
                       setShowAdminFormModal(false);
                     }}

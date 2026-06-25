@@ -541,11 +541,30 @@ app.post('/api/shifts/clockout', async (req, res) => {
       durationMinutes = Math.max(1, Math.round(diffMs / (60 * 1000)));
     }
 
+    // Get work date string (YYYY-MM-DD) from clock-in time
+    const dateStr = shift.clockInTime.substring(0, 10);
+
+    // Find or create daily claim
+    let claimId = `claim-${workerId}-${dateStr}`;
+    const [existingClaims] = await db.query(
+      'SELECT * FROM claims WHERE workerId = ? AND date = ?',
+      [workerId, dateStr]
+    );
+
+    if (existingClaims.length === 0) {
+      await db.query(`
+        INSERT INTO claims (id, workerId, workerName, date, payRate, payout, status)
+        VALUES (?, ?, ?, ?, 100.00, 100.00, 'pending')
+      `, [claimId, workerId, shift.workerName, dateStr]);
+    } else {
+      claimId = existingClaims[0].id;
+    }
+
     await db.query(`
       UPDATE shifts 
-      SET status = 'completed', clockOutTime = ?, clockOutDistance = ?, durationMinutes = ?, payout = payRate, claimStatus = 'pending'
+      SET status = 'completed', clockOutTime = ?, clockOutDistance = ?, durationMinutes = ?, claimId = ?
       WHERE id = ?
-    `, [clockOutTime, parseFloat(distance), durationMinutes, shift.id]);
+    `, [clockOutTime, parseFloat(distance), durationMinutes, claimId, shift.id]);
 
     const [updatedShift] = await db.query('SELECT * FROM shifts WHERE id = ?', [shift.id]);
     return res.json({ success: true, shift: updatedShift[0] });
@@ -555,43 +574,48 @@ app.post('/api/shifts/clockout', async (req, res) => {
   }
 });
 
-// Adjust shift payout
-app.put('/api/shifts/:id/payout', async (req, res) => {
+// Get all claims
+app.get('/api/claims', async (req, res) => {
+  try {
+    const db = getDb();
+    const [rows] = await db.query('SELECT * FROM claims ORDER BY date DESC');
+    return res.json(rows);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+});
+
+// Update claim
+app.put('/api/claims/:id', async (req, res) => {
   const { id } = req.params;
-  const { payRate, payout, approve, claimStatus } = req.body;
+  const { payRate, payout, status } = req.body;
 
   try {
     const db = getDb();
-    
-    // Fallback to existing values if not provided in req.body
-    const [existing] = await db.query('SELECT * FROM shifts WHERE id = ?', [id]);
+    const [existing] = await db.query('SELECT * FROM claims WHERE id = ?', [id]);
     if (existing.length === 0) {
-      return res.status(404).json({ success: false, error: 'Shift not found.' });
+      return res.status(404).json({ success: false, error: 'Claim not found.' });
     }
-    const currentShift = existing[0];
+    const currentClaim = existing[0];
 
-    const finalPayRate = payRate !== undefined ? parseFloat(payRate) : parseFloat(currentShift.payRate);
-    const finalPayout = payout !== undefined && payout !== null ? parseFloat(payout) : parseFloat(currentShift.payout || 0);
+    const finalPayRate = payRate !== undefined ? parseFloat(payRate) : parseFloat(currentClaim.payRate);
+    const finalPayout = payout !== undefined ? parseFloat(payout) : parseFloat(currentClaim.payout);
+    const finalStatus = status !== undefined ? status : currentClaim.status;
 
-    let query = `UPDATE shifts SET payRate = ?, payout = ?`;
-    const params = [
-      isNaN(finalPayRate) ? 0 : finalPayRate,
-      isNaN(finalPayout) ? 0 : finalPayout
-    ];
+    await db.query(`
+      UPDATE claims 
+      SET payRate = ?, payout = ?, status = ?
+      WHERE id = ?
+    `, [
+      isNaN(finalPayRate) ? 100.00 : finalPayRate,
+      isNaN(finalPayout) ? 100.00 : finalPayout,
+      finalStatus,
+      id
+    ]);
 
-    if (claimStatus) {
-      query += `, claimStatus = ?`;
-      params.push(claimStatus);
-    } else if (approve) {
-      query += `, claimStatus = 'approved'`;
-    }
-
-    query += ` WHERE id = ?`;
-    params.push(id);
-
-    await db.query(query, params);
-    const [updatedShift] = await db.query('SELECT * FROM shifts WHERE id = ?', [id]);
-    return res.json({ success: true, shift: updatedShift[0] });
+    const [updatedClaim] = await db.query('SELECT * FROM claims WHERE id = ?', [id]);
+    return res.json({ success: true, claim: updatedClaim[0] });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Internal server error.' });
@@ -607,6 +631,7 @@ app.post('/api/reset', async (req, res) => {
   try {
     const db = getDb();
     await db.query('DROP TABLE IF EXISTS shifts');
+    await db.query('DROP TABLE IF EXISTS claims');
     await db.query('DROP TABLE IF EXISTS jobs');
     await db.query('DROP TABLE IF EXISTS users');
     

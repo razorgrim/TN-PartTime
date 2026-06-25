@@ -114,16 +114,18 @@ export async function initializeDatabase() {
       // Ignore if column already exists
     }
 
-    try {
-      await connection.query(`ALTER TABLE shifts ADD COLUMN payout DECIMAL(10, 2) DEFAULT NULL`);
-    } catch (e) {
-      // Ignore if column already exists
-    }
-    try {
-      await connection.query(`ALTER TABLE shifts ADD COLUMN claimStatus VARCHAR(100) DEFAULT NULL`);
-    } catch (e) {
-      // Ignore if column already exists
-    }
+    // Create claims table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS claims (
+        id VARCHAR(255) PRIMARY KEY,
+        workerId VARCHAR(255) NOT NULL,
+        workerName VARCHAR(255) NOT NULL,
+        date VARCHAR(100) NOT NULL,
+        payRate DECIMAL(10, 2) NOT NULL DEFAULT 100.00,
+        payout DECIMAL(10, 2) NOT NULL DEFAULT 100.00,
+        status VARCHAR(100) DEFAULT 'pending'
+      ) ENGINE=InnoDB;
+    `);
 
     // Create shifts table
     await connection.query(`
@@ -133,8 +135,6 @@ export async function initializeDatabase() {
         jobTitle VARCHAR(255) NOT NULL,
         locationName TEXT NOT NULL,
         payRate DECIMAL(10, 2) NOT NULL,
-        payout DECIMAL(10, 2) DEFAULT NULL,
-        claimStatus VARCHAR(100) DEFAULT NULL,
         workerId VARCHAR(255) NOT NULL,
         workerName VARCHAR(255) NOT NULL,
         status ENUM('active', 'completed') DEFAULT 'active',
@@ -142,9 +142,27 @@ export async function initializeDatabase() {
         clockInDistance DECIMAL(10, 2) NOT NULL,
         clockOutTime VARCHAR(100) DEFAULT NULL,
         clockOutDistance DECIMAL(10, 2) DEFAULT NULL,
-        durationMinutes INT DEFAULT NULL
+        durationMinutes INT DEFAULT NULL,
+        claimId VARCHAR(255) DEFAULT NULL
       ) ENGINE=InnoDB;
     `);
+
+    // Dynamically update shifts table for existing databases
+    try {
+      await connection.query(`ALTER TABLE shifts ADD COLUMN claimId VARCHAR(255) DEFAULT NULL`);
+    } catch (e) {
+      // Ignore if column already exists
+    }
+    try {
+      await connection.query(`ALTER TABLE shifts DROP COLUMN payout`);
+    } catch (e) {
+      // Ignore if column already dropped
+    }
+    try {
+      await connection.query(`ALTER TABLE shifts DROP COLUMN claimStatus`);
+    } catch (e) {
+      // Ignore if column already dropped
+    }
 
     // Seed default users if empty
     const [userRows] = await connection.query('SELECT COUNT(*) as count FROM users');
@@ -171,14 +189,25 @@ export async function initializeDatabase() {
       `);
     }
 
+    // Seed default claims if empty
+    const [claimRows] = await connection.query('SELECT COUNT(*) as count FROM claims');
+    if (claimRows[0].count === 0) {
+      console.log('No claims found. Seeding default claims...');
+      await connection.query(`
+        INSERT INTO claims (id, workerId, workerName, date, payRate, payout, status)
+        VALUES 
+        ('claim-pt-1-2026-06-20', 'pt-1', 'Ahmad Syamil', '2026-06-20', 100.00, 100.00, 'approved')
+      `);
+    }
+
     // Seed default shifts if empty
     const [shiftRows] = await connection.query('SELECT COUNT(*) as count FROM shifts');
     if (shiftRows[0].count === 0) {
       console.log('No shifts found. Seeding default shifts...');
       await connection.query(`
-        INSERT INTO shifts (id, jobId, jobTitle, locationName, payRate, payout, claimStatus, workerId, workerName, status, clockInTime, clockInDistance, clockOutTime, clockOutDistance, durationMinutes)
+        INSERT INTO shifts (id, jobId, jobTitle, locationName, payRate, workerId, workerName, status, clockInTime, clockInDistance, clockOutTime, clockOutDistance, durationMinutes, claimId)
         VALUES 
-        ('shift-1', 'job-1', 'Office IT Setup Assistant', 'Kuala Lumpur Convention Centre (KLCC), Hall 4', 150.00, 150.00, 'approved', 'pt-1', 'Ahmad Syamil', 'completed', '2026-06-20T09:00:00Z', 35.00, '2026-06-20T11:30:00Z', 45.00, 150)
+        ('shift-1', 'job-1', 'Office IT Setup Assistant', 'Kuala Lumpur Convention Centre (KLCC), Hall 4', 150.00, 'pt-1', 'Ahmad Syamil', 'completed', '2026-06-20T09:00:00Z', 35.00, '2026-06-20T11:30:00Z', 45.00, 150, 'claim-pt-1-2026-06-20')
       `);
     }
 

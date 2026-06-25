@@ -20,69 +20,25 @@ const parseLocalDate = (dateStr) => {
   return new Date(year, month - 1, day);
 };
 
-export default function PhoneClaimsTab({ partTimerSession, shifts, showToast }) {
-  const { adjustShiftPayout } = useContext(AppContext);
+export default function PhoneClaimsTab({ partTimerSession, shifts, claims, showToast }) {
+  const { adjustClaim } = useContext(AppContext);
   const [selectedClaimIds, setSelectedClaimIds] = useState([]);
 
-  const ptShifts = shifts.filter(s => s.workerId === partTimerSession?.id);
-  const completedShifts = ptShifts.filter(s => s.status === 'completed');
+  const myClaims = claims.filter(c => c.workerId === partTimerSession?.id);
 
-  const getDailyClaims = (workerShifts) => {
-    const groups = {};
-    workerShifts.forEach(shift => {
-      const dateStr = shift.clockInTime.substring(0, 10);
-      if (!groups[dateStr]) {
-        groups[dateStr] = {
-          date: dateStr,
-          shifts: [],
-          jobTitles: [],
-          locations: [],
-          totalDuration: 0,
-        };
-      }
-      groups[dateStr].shifts.push(shift);
-      if (!groups[dateStr].jobTitles.includes(shift.jobTitle)) {
-        groups[dateStr].jobTitles.push(shift.jobTitle);
-      }
-      if (!groups[dateStr].locations.includes(shift.locationName)) {
-        groups[dateStr].locations.push(shift.locationName);
-      }
-      groups[dateStr].totalDuration += (shift.durationMinutes || 0);
-    });
+  const dailyClaims = myClaims.map(claim => {
+    const claimShifts = shifts.filter(s => s.claimId === claim.id);
+    return {
+      ...claim,
+      jobTitle: claimShifts.map(s => s.jobTitle).join(' + ') || 'No Shifts',
+      locationName: claimShifts.map(s => s.locationName).join('; ') || 'No Location',
+      durationMinutes: claimShifts.reduce((sum, s) => sum + (s.durationMinutes || 0), 0),
+      claimStatus: claim.status,
+      shifts: claimShifts
+    };
+  });
 
-    return Object.values(groups).map(group => {
-      // Resolve daily status
-      const statuses = group.shifts.map(s => s.claimStatus || 'pending');
-      let finalStatus = 'paid';
-      if (statuses.includes('pending')) {
-        finalStatus = 'pending';
-      } else if (statuses.includes('approved')) {
-        finalStatus = 'approved';
-      } else if (statuses.includes('submitted')) {
-        finalStatus = 'submitted';
-      }
-
-      const hasPayout = group.shifts.some(s => s.payout !== null);
-      const totalPayout = hasPayout
-        ? group.shifts.reduce((sum, s) => sum + parseFloat(s.payout || 0), 0)
-        : 100.00;
-
-      return {
-        id: `daily-${group.date}`,
-        date: group.date,
-        jobTitle: group.jobTitles.join(' + '),
-        locationName: group.locations.join('; '),
-        payRate: 100.00,
-        payout: totalPayout,
-        claimStatus: finalStatus,
-        durationMinutes: group.totalDuration,
-        shifts: group.shifts
-      };
-    });
-  };
-
-  const dailyClaims = getDailyClaims(completedShifts);
-  const totalEarnings = dailyClaims.reduce((acc, c) => acc + c.payout, 0);
+  const totalEarnings = dailyClaims.reduce((acc, c) => acc + parseFloat(c.payout || 0), 0);
 
   const toggleSelectClaim = (claimId) => {
     setSelectedClaimIds(prev => 
@@ -93,17 +49,15 @@ export default function PhoneClaimsTab({ partTimerSession, shifts, showToast }) 
   };
 
   const selectedClaims = dailyClaims.filter(c => selectedClaimIds.includes(c.id));
-  const selectedTotalAmount = selectedClaims.reduce((acc, c) => acc + c.payout, 0);
+  const selectedTotalAmount = selectedClaims.reduce((acc, c) => acc + parseFloat(c.payout || 0), 0);
 
   const handleSubmitClaims = async () => {
     try {
-      // Set all selected shifts status to 'submitted'
+      // Set all selected claims status to 'submitted'
       for (const claim of selectedClaims) {
-        for (const shift of claim.shifts) {
-          const res = await adjustShiftPayout(shift.id, shift.payRate, shift.payout, false, 'submitted');
-          if (!res || !res.success) {
-            throw new Error(res?.message || "Failed to submit shift claim.");
-          }
+        const res = await adjustClaim(claim.id, claim.payRate, claim.payout, 'submitted');
+        if (!res || !res.success) {
+          throw new Error(res?.message || "Failed to submit claim.");
         }
       }
       showToast("Claim form submitted to admin successfully!", "success");

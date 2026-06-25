@@ -23,6 +23,7 @@ export default function PhoneSimulator({ showToast, onBackToLanding }) {
     logoutPartTimer, 
     jobs, 
     shifts,
+    claims,
     clockInJob,
     clockOutJob,
     updateStaffProfile
@@ -241,6 +242,7 @@ export default function PhoneSimulator({ showToast, onBackToLanding }) {
                   <PhoneClaimsTab 
                     partTimerSession={partTimerSession} 
                     shifts={shifts} 
+                    claims={claims}
                     showToast={showToast}
                   />
                 )}
