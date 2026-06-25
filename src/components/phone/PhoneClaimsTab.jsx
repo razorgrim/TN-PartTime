@@ -52,6 +52,12 @@ export default function PhoneClaimsTab({ partTimerSession, shifts, claims, showT
   const selectedTotalAmount = selectedClaims.reduce((acc, c) => acc + parseFloat(c.payout || 0), 0);
 
   const handleSubmitClaims = async () => {
+    // Verify bank details are completed
+    if (!partTimerSession?.bankName || !partTimerSession?.bankAccount || !partTimerSession?.bankHolder) {
+      showToast("Please complete your bank details on your Profile tab before submitting claims.", "error");
+      return;
+    }
+
     try {
       // Set all selected claims status to 'submitted'
       for (const claim of selectedClaims) {
