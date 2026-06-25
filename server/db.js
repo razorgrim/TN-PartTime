@@ -56,7 +56,8 @@ export async function initializeDatabase() {
         createdAt VARCHAR(100) NOT NULL,
         bankName VARCHAR(255) DEFAULT NULL,
         bankAccount VARCHAR(255) DEFAULT NULL,
-        bankHolder VARCHAR(255) DEFAULT NULL
+        bankHolder VARCHAR(255) DEFAULT NULL,
+        salutation VARCHAR(50) DEFAULT 'En.'
       ) ENGINE=InnoDB;
     `);
 
@@ -104,6 +105,11 @@ export async function initializeDatabase() {
     }
     try {
       await connection.query(`ALTER TABLE users ADD COLUMN bankHolder VARCHAR(255) DEFAULT NULL`);
+    } catch (e) {
+      // Ignore if column already exists
+    }
+    try {
+      await connection.query(`ALTER TABLE users ADD COLUMN salutation VARCHAR(50) DEFAULT 'En.'`);
     } catch (e) {
       // Ignore if column already exists
     }

@@ -12,6 +12,7 @@ export default function StaffDirectory({
   // Add Staff State Form
   const [showAddStaffForm, setShowAddStaffForm] = useState(false);
   const [newStaffName, setNewStaffName] = useState('');
+  const [newStaffSalutation, setNewStaffSalutation] = useState('En.');
   const [newStaffIc, setNewStaffIc] = useState('');
   const [newStaffEmail, setNewStaffEmail] = useState('');
   const [newStaffPhone, setNewStaffPhone] = useState('');
@@ -31,10 +32,11 @@ export default function StaffDirectory({
       showToast('Password must contain both letters and numbers.', 'error');
       return;
     }
-    const res = await addStaff(newStaffName, newStaffIc, newStaffEmail, newStaffPhone, newStaffPassword);
+    const res = await addStaff(newStaffName, newStaffIc, newStaffEmail, newStaffPhone, newStaffPassword, newStaffSalutation);
     if (res.success) {
       showToast(res.message, 'success');
       setNewStaffName('');
+      setNewStaffSalutation('En.');
       setNewStaffIc('');
       setNewStaffEmail('');
       setNewStaffPhone('');
@@ -96,6 +98,18 @@ export default function StaffDirectory({
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+            <div className="form-group">
+              <label className="form-label">Title</label>
+              <select 
+                className="form-input" 
+                value={newStaffSalutation} 
+                onChange={(e) => setNewStaffSalutation(e.target.value)}
+                required
+              >
+                <option value="En.">En.</option>
+                <option value="Cik">Cik</option>
+              </select>
+            </div>
             <div className="form-group">
               <label className="form-label">Full Name</label>
               <input 

@@ -135,7 +135,7 @@ app.post('/api/auth/login-parttimer', async (req, res) => {
 
 // Register Part-Timer
 app.post('/api/auth/register', async (req, res) => {
-  const { name, icNumber, email, phone, password } = req.body;
+  const { name, icNumber, email, phone, password, salutation } = req.body;
   
   const validationError = validateRegistration(name, icNumber, email, phone, password);
   if (validationError) {
@@ -167,9 +167,9 @@ app.post('/api/auth/register', async (req, res) => {
     const createdAt = new Date().toISOString();
 
     await db.query(`
-      INSERT INTO users (id, name, icNumber, email, phone, password, role, status, createdAt)
-      VALUES (?, ?, ?, ?, ?, ?, 'part-timer', 'pending', ?)
-    `, [id, name.trim(), formattedIc, email.trim().toLowerCase(), cleanPhone, password, createdAt]);
+      INSERT INTO users (id, name, icNumber, email, phone, password, role, status, createdAt, salutation)
+      VALUES (?, ?, ?, ?, ?, ?, 'part-timer', 'pending', ?, ?)
+    `, [id, name.trim(), formattedIc, email.trim().toLowerCase(), cleanPhone, password, createdAt, salutation || 'En.']);
 
     return res.json({ success: true, message: 'Registration successful! Awaiting admin approval.' });
   } catch (error) {
@@ -196,7 +196,7 @@ app.get('/api/users', async (req, res) => {
 
 // Add Staff (Admin)
 app.post('/api/users', async (req, res) => {
-  const { name, icNumber, email, phone, password } = req.body;
+  const { name, icNumber, email, phone, password, salutation } = req.body;
   
   const validationError = validateRegistration(name, icNumber, email, phone, password);
   if (validationError) {
@@ -228,9 +228,9 @@ app.post('/api/users', async (req, res) => {
     const createdAt = new Date().toISOString();
 
     await db.query(`
-      INSERT INTO users (id, name, icNumber, email, phone, password, role, status, createdAt)
-      VALUES (?, ?, ?, ?, ?, ?, 'part-timer', 'enabled', ?)
-    `, [id, name.trim(), formattedIc, email.trim().toLowerCase(), cleanPhone, password, createdAt]);
+      INSERT INTO users (id, name, icNumber, email, phone, password, role, status, createdAt, salutation)
+      VALUES (?, ?, ?, ?, ?, ?, 'part-timer', 'enabled', ?, ?)
+    `, [id, name.trim(), formattedIc, email.trim().toLowerCase(), cleanPhone, password, createdAt, salutation || 'En.']);
 
     const [newUser] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
     return res.json({ success: true, message: `Staff member ${name} created successfully.`, user: newUser[0] });
@@ -243,7 +243,7 @@ app.post('/api/users', async (req, res) => {
 // Update Staff (Admin)
 app.put('/api/users/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, icNumber, email, phone, password } = req.body;
+  const { name, icNumber, email, phone, password, salutation } = req.body;
 
   try {
     const db = getDb();
@@ -266,8 +266,8 @@ app.put('/api/users/:id', async (req, res) => {
     }
 
     // Prepare update query
-    let updateQuery = `UPDATE users SET name = ?, icNumber = ?, email = ?, phone = ?`;
-    const params = [name, icNumber, email, phone];
+    let updateQuery = `UPDATE users SET name = ?, icNumber = ?, email = ?, phone = ?, salutation = ?`;
+    const params = [name, icNumber, email, phone, salutation || 'En.'];
 
     if (password && password.trim() !== '') {
       if (password.length < 8 || !/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
@@ -293,7 +293,7 @@ app.put('/api/users/:id', async (req, res) => {
 // Update Staff Profile (Change password and bank details)
 app.put('/api/users/:id/profile', async (req, res) => {
   const { id } = req.params;
-  const { currentPassword, newPassword, bankName, bankAccount, bankHolder } = req.body;
+  const { currentPassword, newPassword, bankName, bankAccount, bankHolder, salutation } = req.body;
 
   try {
     const db = getDb();
@@ -320,9 +320,9 @@ app.put('/api/users/:id/profile', async (req, res) => {
 
     await db.query(`
       UPDATE users 
-      SET password = ?, bankName = ?, bankAccount = ?, bankHolder = ?
+      SET password = ?, bankName = ?, bankAccount = ?, bankHolder = ?, salutation = ?
       WHERE id = ?
-    `, [passwordToUpdate, bankName || null, bankAccount || null, bankHolder || null, id]);
+    `, [passwordToUpdate, bankName || null, bankAccount || null, bankHolder || null, salutation || 'En.', id]);
 
     const [updatedUser] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
     return res.json({ success: true, message: 'Profile details updated successfully.', user: updatedUser[0] });
@@ -558,14 +558,17 @@ app.post('/api/shifts/clockout', async (req, res) => {
 // Adjust shift payout
 app.put('/api/shifts/:id/payout', async (req, res) => {
   const { id } = req.params;
-  const { payRate, payout, approve } = req.body;
+  const { payRate, payout, approve, claimStatus } = req.body;
 
   try {
     const db = getDb();
     let query = `UPDATE shifts SET payRate = ?, payout = ?`;
     const params = [parseFloat(payRate), parseFloat(payout)];
 
-    if (approve) {
+    if (claimStatus) {
+      query += `, claimStatus = ?`;
+      params.push(claimStatus);
+    } else if (approve) {
       query += `, claimStatus = 'approved'`;
     }
 

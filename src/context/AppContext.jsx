@@ -91,12 +91,12 @@ export const AppProvider = ({ children }) => {
   }, [partTimerSession]);
 
   // Register Part-Timer
-  const registerPartTimer = async (name, icNumber, email, phone, password) => {
+  const registerPartTimer = async (name, icNumber, email, phone, password, salutation) => {
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, icNumber, email, phone, password })
+        body: JSON.stringify({ name, icNumber, email, phone, password, salutation })
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -115,12 +115,12 @@ export const AppProvider = ({ children }) => {
   };
 
   // Add Staff member directly from Admin Control Panel
-  const addStaff = async (name, icNumber, email, phone, password) => {
+  const addStaff = async (name, icNumber, email, phone, password, salutation) => {
     try {
       const res = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, icNumber, email, phone, password })
+        body: JSON.stringify({ name, icNumber, email, phone, password, salutation })
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -335,12 +335,12 @@ export const AppProvider = ({ children }) => {
   };
 
   // Adjust completed shift payout details
-  const adjustShiftPayout = async (shiftId, newRate, newPayout, approve = false) => {
+  const adjustShiftPayout = async (shiftId, newRate, newPayout, approve = false, claimStatus = null) => {
     try {
       const res = await fetch(`/api/shifts/${shiftId}/payout`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payRate: newRate, payout: newPayout, approve })
+        body: JSON.stringify({ payRate: newRate, payout: newPayout, approve, claimStatus })
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -371,12 +371,12 @@ export const AppProvider = ({ children }) => {
 
   // Update staff details from admin panel
   // Update staff details from admin panel
-  const updateStaffProfile = async (userId, currentPassword, newPassword, bankName, bankAccount, bankHolder) => {
+  const updateStaffProfile = async (userId, currentPassword, newPassword, bankName, bankAccount, bankHolder, salutation) => {
     try {
       const res = await fetch(`/api/users/${userId}/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentPassword, newPassword, bankName, bankAccount, bankHolder })
+        body: JSON.stringify({ currentPassword, newPassword, bankName, bankAccount, bankHolder, salutation })
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -392,12 +392,12 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const updateStaff = async (userId, name, icNumber, email, phone, password) => {
+  const updateStaff = async (userId, name, icNumber, email, phone, password, salutation) => {
     try {
       const res = await fetch(`/api/users/${userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, icNumber, email, phone, password })
+        body: JSON.stringify({ name, icNumber, email, phone, password, salutation })
       });
       const data = await res.json();
       if (res.ok && data.success) {

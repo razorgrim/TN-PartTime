@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Wallet, Search, ArrowLeft } from 'lucide-react';
+import { Wallet, Search, ArrowLeft, Printer, FileText, X } from 'lucide-react';
+import logoImg from '../../assets/logo.png';
 
 const formatDuration = (minutes) => {
   if (!minutes) return '—';
@@ -11,10 +12,21 @@ const formatDuration = (minutes) => {
   return `${mins}m`;
 };
 
+// Parse local YYYY-MM-DD
+const parseLocalDate = (dateStr) => {
+  if (!dateStr) return new Date();
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
 export default function ClaimsManager({ users, shifts, adjustShiftPayout, showToast }) {
   const [selectedClaimStaffId, setSelectedClaimStaffId] = useState(null);
   const [claimSearchQuery, setClaimSearchQuery] = useState('');
   const [claimStatusFilter, setClaimStatusFilter] = useState('all');
+
+  // Admin Claim Modal States
+  const [showAdminFormModal, setShowAdminFormModal] = useState(false);
+  const [modalClaim, setModalClaim] = useState(null);
 
   const getDailyClaims = (workerShifts) => {
     const groups = {};
@@ -27,7 +39,6 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
           jobTitles: [],
           locations: [],
           totalDuration: 0,
-          claimStatus: 'approved',
         };
       }
       groups[dateStr].shifts.push(shift);
@@ -38,13 +49,22 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
         groups[dateStr].locations.push(shift.locationName);
       }
       groups[dateStr].totalDuration += (shift.durationMinutes || 0);
-      if (shift.claimStatus === 'pending') {
-        groups[dateStr].claimStatus = 'pending';
-      }
     });
 
     return Object.values(groups).map(group => {
       group.shifts.sort((a, b) => new Date(a.clockInTime) - new Date(b.clockInTime));
+      
+      // Resolve daily status
+      const statuses = group.shifts.map(s => s.claimStatus || 'pending');
+      let finalStatus = 'paid';
+      if (statuses.includes('pending')) {
+        finalStatus = 'pending';
+      } else if (statuses.includes('approved')) {
+        finalStatus = 'approved';
+      } else if (statuses.includes('submitted')) {
+        finalStatus = 'submitted';
+      }
+
       const hasPayout = group.shifts.some(s => s.payout !== null);
       const totalPayout = hasPayout
         ? group.shifts.reduce((sum, s) => sum + parseFloat(s.payout || 0), 0)
@@ -57,7 +77,7 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
         locationName: group.locations.join('; '),
         payRate: 100.00,
         payout: totalPayout,
-        claimStatus: group.claimStatus,
+        claimStatus: finalStatus,
         durationMinutes: group.totalDuration,
         shifts: group.shifts
       };
@@ -82,13 +102,15 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
                 <th>Total Claims (Days)</th>
                 <th>Pending Approval</th>
                 <th>Approved Claims</th>
+                <th>Submitted Forms</th>
+                <th>Paid Claims</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {users.filter(u => u.role === 'part-timer').length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                  <td colSpan="7" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
                     No registered staff found.
                   </td>
                 </tr>
@@ -99,6 +121,8 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
                   const total = dailyClaims.length;
                   const pending = dailyClaims.filter(c => c.claimStatus === 'pending').length;
                   const approved = dailyClaims.filter(c => c.claimStatus === 'approved').length;
+                  const submitted = dailyClaims.filter(c => c.claimStatus === 'submitted').length;
+                  const paid = dailyClaims.filter(c => c.claimStatus === 'paid').length;
 
                   return (
                     <tr key={pt.id} style={{ cursor: 'pointer' }} onClick={() => setSelectedClaimStaffId(pt.id)}>
@@ -108,7 +132,7 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
                             {pt.name ? pt.name.charAt(0).toUpperCase() : '?'}
                           </div>
                           <div>
-                            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{pt.name}</div>
+                            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{(pt.salutation || 'En.') + ' ' + pt.name}</div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{pt.email} | {pt.phone}</div>
                           </div>
                         </div>
@@ -124,6 +148,16 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
                       <td>
                         <span className="badge badge-enabled" style={{ backgroundColor: '#d1fae5', color: '#065f46', borderColor: '#a7f3d0', fontSize: '0.75rem' }}>
                           {approved} approved
+                        </span>
+                      </td>
+                      <td>
+                        <span className="badge badge-pending" style={{ backgroundColor: '#ffedd5', color: '#c2410c', borderColor: '#fed7aa', fontSize: '0.75rem' }}>
+                          {submitted} submitted
+                        </span>
+                      </td>
+                      <td>
+                        <span className="badge badge-enabled" style={{ backgroundColor: '#dbeafe', color: '#1e40af', borderColor: '#bfdbfe', fontSize: '0.75rem' }}>
+                          {paid} paid
                         </span>
                       </td>
                       <td style={{ textAlign: 'right' }}>
@@ -160,7 +194,31 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
 
   return (
     <div className="card animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #printable-admin-claim-sheet, #printable-admin-claim-sheet * {
+            visibility: visible;
+          }
+          #printable-admin-claim-sheet {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            background: white;
+            color: black;
+            padding: 20px;
+            font-size: 11px;
+          }
+          .no-print {
+            display: none !important;
+          }
+        }
+      `}</style>
+
+      <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button 
             className="btn btn-secondary btn-sm" 
@@ -175,7 +233,7 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
           </button>
           <div>
             <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0 }}>
-              Claims for {selectedUser ? selectedUser.name : 'Unknown Staff'}
+              Claims for {selectedUser ? (selectedUser.salutation || 'En.') + ' ' + selectedUser.name : 'Unknown Staff'}
             </h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', margin: 0 }}>
               {selectedUser ? `${selectedUser.email} | ${selectedUser.phone}` : ''}
@@ -207,22 +265,24 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
           
           <select 
             className="form-input" 
-            style={{ width: '130px', height: '32px', fontSize: '0.85rem' }}
+            style={{ width: '150px', height: '32px', fontSize: '0.85rem' }}
             value={claimStatusFilter}
             onChange={(e) => setClaimStatusFilter(e.target.value)}
           >
             <option value="all">All Statuses</option>
-            <option value="pending">Pending</option>
+            <option value="pending">Pending Approval</option>
             <option value="approved">Approved</option>
+            <option value="submitted">Submitted Forms</option>
+            <option value="paid">Paid Payouts</option>
           </select>
         </div>
       </div>
-      <div className="table-wrapper">
+      <div className="table-wrapper no-print">
         <table className="admin-table">
           <thead>
             <tr>
               <th>Date & Consolidated Site Details</th>
-              <th style={{ width: '45%' }}>Clock In / Out Details per Site</th>
+              <th style={{ width: '40%' }}>Clock In / Out Details per Site</th>
               <th>Daily Payout (RM)</th>
               <th style={{ textAlign: 'right' }}>Actions & Status</th>
             </tr>
@@ -239,7 +299,7 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
                 <tr key={claim.id}>
                   <td>
                     <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
-                      {new Date(claim.date + 'T00:00:00').toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {parseLocalDate(claim.date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                     </div>
                     <div style={{ marginTop: '6px', marginBottom: '8px' }}>
                       <span className="badge" style={{ backgroundColor: '#eff6ff', color: '#1e40af', borderColor: '#bfdbfe', fontSize: '0.7rem', padding: '3px 8px', fontWeight: 700 }}>
@@ -267,41 +327,95 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
                     </div>
                   </td>
                   <td>
-                    <input 
-                      type="number" 
-                      className="form-input" 
-                      style={{ padding: '4px 8px', fontSize: '0.85rem', width: '90px', height: '28px', fontWeight: 'bold' }}
-                      defaultValue={claim.payout}
-                      id={`payout-${claim.id}`}
-                    />
+                    {['pending', 'approved'].includes(claim.claimStatus) ? (
+                      <input 
+                        type="number" 
+                        className="form-input" 
+                        style={{ padding: '4px 8px', fontSize: '0.85rem', width: '90px', height: '28px', fontWeight: 'bold' }}
+                        defaultValue={claim.payout}
+                        id={`payout-${claim.id}`}
+                      />
+                    ) : (
+                      <span style={{ fontWeight: 'bold', fontSize: '0.85rem', paddingLeft: '8px' }}>RM {Number(claim.payout).toFixed(2)}</span>
+                    )}
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
-                      <button 
-                        className="btn btn-primary btn-sm"
-                        style={{ height: '28px', padding: '0 12px', fontSize: '0.75rem' }}
-                        onClick={async () => {
-                          const payoutVal = parseFloat(document.getElementById(`payout-${claim.id}`).value);
-                          if (!isNaN(payoutVal)) {
-                            // Approve all shifts on this day, assigning the payout value to the first shift
-                            for (let i = 0; i < claim.shifts.length; i++) {
-                              const shift = claim.shifts[i];
-                              const targetRate = i === 0 ? payoutVal : 0;
-                              const targetPayout = i === 0 ? payoutVal : 0;
-                              await adjustShiftPayout(shift.id, targetRate, targetPayout, true);
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                      {/* View Form Button */}
+                      {['submitted', 'paid'].includes(claim.claimStatus) && (
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          style={{ height: '28px', padding: '0 8px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                          onClick={() => {
+                            setModalClaim(claim);
+                            setShowAdminFormModal(true);
+                          }}
+                        >
+                          <FileText size={13} /> View Form
+                        </button>
+                      )}
+
+                      {/* Main Action Button */}
+                      {claim.claimStatus === 'submitted' ? (
+                        <button 
+                          className="btn btn-primary btn-sm"
+                          style={{ height: '28px', padding: '0 12px', fontSize: '0.75rem', backgroundColor: '#10b981', borderColor: '#059669' }}
+                          onClick={async () => {
+                            for (const shift of claim.shifts) {
+                              await adjustShiftPayout(shift.id, shift.payRate, shift.payout, false, 'paid');
                             }
-                            showToast("Daily claim payout updated and approved successfully", "success");
-                          } else {
-                            showToast("Please enter a valid payout number", "error");
-                          }
-                        }}
-                      >
-                        {claim.claimStatus === 'approved' ? 'Update' : 'Approve'}
-                      </button>
-                      {claim.claimStatus === 'approved' ? (
-                        <span className="badge badge-enabled">Approved</span>
+                            showToast("Daily claim payout processed and marked as Paid successfully", "success");
+                          }}
+                        >
+                          Mark as Paid
+                        </button>
+                      ) : claim.claimStatus === 'approved' ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end' }}>
+                          <button 
+                            className="btn btn-primary btn-sm"
+                            style={{ height: '28px', padding: '0 12px', fontSize: '0.75rem' }}
+                            onClick={async () => {
+                              const payoutVal = parseFloat(document.getElementById(`payout-${claim.id}`).value);
+                              if (!isNaN(payoutVal)) {
+                                for (let i = 0; i < claim.shifts.length; i++) {
+                                  const shift = claim.shifts[i];
+                                  const targetRate = i === 0 ? payoutVal : 0;
+                                  const targetPayout = i === 0 ? payoutVal : 0;
+                                  await adjustShiftPayout(shift.id, targetRate, targetPayout, true);
+                                }
+                                showToast("Daily claim payout updated and approved successfully", "success");
+                              } else {
+                                showToast("Please enter a valid payout number", "error");
+                              }
+                            }}
+                          >
+                            Update
+                          </button>
+                          <span style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', fontStyle: 'italic', fontWeight: 600 }}>Awaiting submission</span>
+                        </div>
+                      ) : claim.claimStatus === 'paid' ? (
+                        <span className="badge badge-enabled" style={{ backgroundColor: '#dbeafe', color: '#1e40af', borderColor: '#bfdbfe' }}>Paid</span>
                       ) : (
-                        <span className="badge badge-pending">Pending</span>
+                        <button 
+                          className="btn btn-primary btn-sm"
+                          style={{ height: '28px', padding: '0 12px', fontSize: '0.75rem' }}
+                          onClick={async () => {
+                            const payoutVal = parseFloat(document.getElementById(`payout-${claim.id}`).value);
+                            if (!isNaN(payoutVal)) {
+                              for (let i = 0; i < claim.shifts.length; i++) {
+                                const shift = claim.shifts[i];
+                                const targetRate = i === 0 ? payoutVal : 0;
+                                const targetPayout = i === 0 ? payoutVal : 0;
+                                await adjustShiftPayout(shift.id, targetRate, targetPayout, true);
+                              }
+                              showToast("Daily claim payout approved successfully", "success");
+                            } else {
+                              showToast("Please enter a valid payout number", "error");
+                            }
+                          }}
+                        >
+                          Approve
+                        </button>
                       )}
                     </div>
                   </td>
@@ -311,6 +425,236 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
           </tbody>
         </table>
       </div>
+
+      {/* Admin Claim Form Modal View */}
+      {showAdminFormModal && modalClaim && (
+        <div 
+          className="modal-overlay no-print"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+        >
+          <div 
+            className="card animate-scale"
+            style={{
+              width: '100%',
+              maxWidth: '800px',
+              backgroundColor: 'white',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              borderRadius: '16px',
+              border: '1px solid var(--border-color)',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: 'var(--shadow-xl)'
+            }}
+          >
+            {/* Modal Controls Header */}
+            <div 
+              style={{ 
+                padding: '0.75rem 1.25rem', 
+                borderBottom: '1px solid var(--border-color)', 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center' 
+              }}
+            >
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700 }}>Claim Form Viewer</h3>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  onClick={() => window.print()}
+                  className="btn btn-secondary"
+                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', height: '30px' }}
+                >
+                  <Printer size={13} /> Print / Save PDF
+                </button>
+                {modalClaim.claimStatus === 'submitted' && (
+                  <button
+                    onClick={async () => {
+                      for (const shift of modalClaim.shifts) {
+                        await adjustShiftPayout(shift.id, shift.payRate, shift.payout, false, 'paid');
+                      }
+                      showToast("Daily claim payout processed and marked as Paid successfully", "success");
+                      setShowAdminFormModal(false);
+                    }}
+                    className="btn btn-primary"
+                    style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', backgroundColor: '#10b981', borderColor: '#059669', height: '30px' }}
+                  >
+                    Mark as Paid
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setShowAdminFormModal(false);
+                    setModalClaim(null);
+                  }}
+                  style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Claim Sheet Area */}
+            <div 
+              id="printable-admin-claim-sheet"
+              style={{
+                padding: '2.5rem',
+                overflowY: 'auto',
+                flex: 1,
+                backgroundColor: 'white',
+                color: 'black',
+                fontFamily: 'Outfit, sans-serif'
+              }}
+            >
+              {/* Document Header Letterhead */}
+              <div style={{ display: 'flex', alignItems: 'center', borderBottom: '2px solid black', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
+                <div style={{ marginRight: '1.5rem' }}>
+                  <img src={logoImg} alt="Logo" style={{ width: '4.5rem', height: '4.5rem', objectFit: 'contain' }} />
+                </div>
+                <div style={{ flex: 1, textAlign: 'center' }}>
+                  <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, letterSpacing: '0.05em' }}>
+                    TOTAL NEUTRON SOLUTION SDN BHD (1064906-M)
+                  </h2>
+                  <p style={{ fontSize: '0.65rem', margin: '2px 0 0 0', color: '#334155', fontWeight: 500 }}>
+                    5-2 PERSIARAN SYED PUTRA 3 TAMAN PERSIARAN DESA 50460 SEPUTEH KUALA LUMPUR
+                  </p>
+                  <p style={{ fontSize: '0.65rem', margin: '1px 0 0 0', color: '#334155', fontWeight: 500 }}>
+                    TEL: 603-8320 8306
+                  </p>
+                </div>
+              </div>
+
+              {/* Title Banner */}
+              <div 
+                style={{ 
+                  border: '2px solid black', 
+                  padding: '5px', 
+                  textAlign: 'center', 
+                  fontWeight: 800, 
+                  fontSize: '0.9rem', 
+                  marginBottom: '1rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  backgroundColor: '#f8fafc'
+                }}
+              >
+                {(selectedUser?.salutation || 'En. / Cik').toUpperCase() + ' ' + (selectedUser?.name || '').toUpperCase()}
+              </div>
+
+              {/* Employee Information Table */}
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1.5rem', fontSize: '0.75rem' }}>
+                <tbody>
+                  <tr>
+                    <td style={{ width: '15%', border: '1px solid black', padding: '6px', fontWeight: 700, backgroundColor: '#f8fafc' }}>Employee Name:</td>
+                    <td style={{ width: '35%', border: '1px solid black', padding: '6px' }}>{selectedUser?.name}</td>
+                    <td style={{ width: '15%', border: '1px solid black', padding: '6px', fontWeight: 700, backgroundColor: '#f8fafc' }}>Contact Numbers:</td>
+                    <td style={{ width: '35%', border: '1px solid black', padding: '6px' }}>{selectedUser?.phone}</td>
+                  </tr>
+                  <tr>
+                    <td style={{ border: '1px solid black', padding: '6px', fontWeight: 700, backgroundColor: '#f8fafc' }}>IC:</td>
+                    <td style={{ border: '1px solid black', padding: '6px' }}>{selectedUser?.icNumber}</td>
+                    <td style={{ border: '1px solid black', padding: '6px', fontWeight: 700, backgroundColor: '#f8fafc' }}>Account Number:</td>
+                    <td style={{ border: '1px solid black', padding: '6px' }}>{selectedUser?.bankAccount || '—'}</td>
+                  </tr>
+                  <tr>
+                    <td style={{ border: '1px solid black', padding: '6px', fontWeight: 700, backgroundColor: '#f8fafc' }}>Date:</td>
+                    <td style={{ border: '1px solid black', padding: '6px' }}>{new Date().toLocaleDateString(undefined, { dateStyle: 'medium' })}</td>
+                    <td style={{ border: '1px solid black', padding: '6px', fontWeight: 700, backgroundColor: '#f8fafc' }}>Account Holder's Name:</td>
+                    <td style={{ border: '1px solid black', padding: '6px' }}>{selectedUser?.bankHolder || '—'}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              {/* Claims Details Breakdown Table */}
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f1f5f9', fontWeight: 800 }}>
+                    <th style={{ border: '1px solid black', padding: '8px', textAlign: 'center', width: '12%' }}>Date</th>
+                    <th style={{ border: '1px solid black', padding: '8px', textAlign: 'center', width: '12%' }}>Check in (Hours)</th>
+                    <th style={{ border: '1px solid black', padding: '8px', textAlign: 'center', width: '12%' }}>Check Out (Hours)</th>
+                    <th style={{ border: '1px solid black', padding: '8px', textAlign: 'left', width: '36%' }}>Location</th>
+                    <th style={{ border: '1px solid black', padding: '8px', textAlign: 'center', width: '10%' }}>Overtime</th>
+                    <th style={{ border: '1px solid black', padding: '8px', textAlign: 'center', width: '10%' }}>Claims</th>
+                    <th style={{ border: '1px solid black', padding: '8px', textAlign: 'right', width: '12%' }}>Price (RM)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {modalClaim.shifts.map((shift, idx) => {
+                    const clockInTimeFormatted = new Date(shift.clockInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const clockOutTimeFormatted = shift.clockOutTime
+                      ? new Date(shift.clockOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : '—';
+                    
+                    return (
+                      <tr key={shift.id}>
+                        <td style={{ border: '1px solid black', padding: '6px', textAlign: 'center' }}>
+                          {idx === 0 ? parseLocalDate(modalClaim.date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                        </td>
+                        <td style={{ border: '1px solid black', padding: '6px', textAlign: 'center' }}>{clockInTimeFormatted}</td>
+                        <td style={{ border: '1px solid black', padding: '6px', textAlign: 'center' }}>{clockOutTimeFormatted}</td>
+                        <td style={{ border: '1px solid black', padding: '6px' }}>
+                          <div style={{ fontWeight: 600 }}>{shift.jobTitle}</div>
+                          <div style={{ fontSize: '0.65rem', color: '#475569' }}>{shift.locationName}</div>
+                        </td>
+                        <td style={{ border: '1px solid black', padding: '6px', textAlign: 'center' }}>—</td>
+                        <td style={{ border: '1px solid black', padding: '6px', textAlign: 'center' }}>Daily Flat Rate</td>
+                        <td style={{ border: '1px solid black', padding: '6px', textAlign: 'right', fontWeight: 600 }}>
+                          RM {idx === 0 ? Number(modalClaim.payout).toFixed(2) : '0.00'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {/* Empty rows to match spreadsheet aesthetic if less than 8 items */}
+                  {Array.from({ length: Math.max(0, 8 - modalClaim.shifts.length) }).map((_, idx) => (
+                    <tr key={`empty-${idx}`} style={{ height: '24px' }}>
+                      <td style={{ border: '1px solid black', padding: '6px' }}></td>
+                      <td style={{ border: '1px solid black', padding: '6px' }}></td>
+                      <td style={{ border: '1px solid black', padding: '6px' }}></td>
+                      <td style={{ border: '1px solid black', padding: '6px' }}></td>
+                      <td style={{ border: '1px solid black', padding: '6px' }}></td>
+                      <td style={{ border: '1px solid black', padding: '6px' }}></td>
+                      <td style={{ border: '1px solid black', padding: '6px' }}></td>
+                    </tr>
+                  ))}
+                  {/* Total Row */}
+                  <tr style={{ backgroundColor: '#f8fafc', fontWeight: 800 }}>
+                    <td colSpan="6" style={{ border: '1px solid black', padding: '8px', textAlign: 'right', fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                      Total Amount Approved:
+                    </td>
+                    <td style={{ border: '1px solid black', padding: '8px', textAlign: 'right', fontSize: '0.78rem', color: 'var(--primary)' }}>
+                      RM {Number(modalClaim.payout).toFixed(2)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              {/* Signature Blocks */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '3.5rem', fontSize: '0.72rem' }}>
+                <div style={{ borderTop: '1px solid black', width: '200px', textAlign: 'center', paddingTop: '5px' }}>
+                  <strong>Submitted By:</strong>
+                  <div style={{ marginTop: '2px', color: '#475569' }}>{selectedUser?.name}</div>
+                </div>
+                <div style={{ borderTop: '1px solid black', width: '200px', textAlign: 'center', paddingTop: '5px' }}>
+                  <strong>Approved & Paid By:</strong>
+                  <div style={{ marginTop: '2px', color: '#475569' }}>Total Neutron Finance</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

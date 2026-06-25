@@ -3,6 +3,7 @@ import { ChevronLeft, User, Fingerprint, Mail, Phone, Key } from 'lucide-react';
 
 export default function PhoneRegister({ registerPartTimer, setScreen, setRegSuccessMsg, showToast }) {
   const [regName, setRegName] = useState('');
+  const [salutation, setSalutation] = useState('En.');
   const [regIc, setRegIc] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPhone, setRegPhone] = useState('');
@@ -62,7 +63,7 @@ export default function PhoneRegister({ registerPartTimer, setScreen, setRegSucc
       return;
     }
 
-    const res = await registerPartTimer(regName, regIc, regEmail, regPhone, regPassword);
+    const res = await registerPartTimer(regName, regIc, regEmail, regPhone, regPassword, salutation);
     if (res.success) {
       showToast('Registered successfully!', 'success');
       setRegSuccessMsg(`Registration submitted! Your account is pending admin approval.`);
@@ -85,18 +86,33 @@ export default function PhoneRegister({ registerPartTimer, setScreen, setRegSucc
       <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '1.5rem' }}>Fill in details to register as a part-timer.</p>
 
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label className="form-label">
-            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><User size={14} /> Full Name</span>
-          </label>
-          <input 
-            type="text" 
-            className="form-input" 
-            placeholder="e.g. John Doe"
-            value={regName}
-            onChange={(e) => setRegName(e.target.value)}
-            required
-          />
+        <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '0.5rem' }}>
+          <div className="form-group">
+            <label className="form-label">Title</label>
+            <select 
+              className="form-input" 
+              style={{ padding: '0.4rem' }}
+              value={salutation} 
+              onChange={(e) => setSalutation(e.target.value)}
+              required
+            >
+              <option value="En.">En.</option>
+              <option value="Cik">Cik</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><User size={14} /> Full Name</span>
+            </label>
+            <input 
+              type="text" 
+              className="form-input" 
+              placeholder="e.g. Ahmad Syamil"
+              value={regName}
+              onChange={(e) => setRegName(e.target.value)}
+              required
+            />
+          </div>
         </div>
 
         <div className="form-group">
