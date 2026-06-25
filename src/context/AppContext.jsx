@@ -345,9 +345,12 @@ export const AppProvider = ({ children }) => {
       const data = await res.json();
       if (res.ok && data.success) {
         setShifts(prev => prev.map(s => s.id === shiftId ? data.shift : s));
+        return { success: true, shift: data.shift };
       }
+      return { success: false, message: data.error || 'Failed to update shift payout.' };
     } catch (error) {
       console.error(error);
+      return { success: false, message: 'Failed to connect to backend server.' };
     }
   };
 

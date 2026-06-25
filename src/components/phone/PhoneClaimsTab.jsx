@@ -100,14 +100,17 @@ export default function PhoneClaimsTab({ partTimerSession, shifts }) {
       // Set all selected shifts status to 'submitted'
       for (const claim of selectedClaims) {
         for (const shift of claim.shifts) {
-          await adjustShiftPayout(shift.id, shift.payRate, shift.payout, false, 'submitted');
+          const res = await adjustShiftPayout(shift.id, shift.payRate, shift.payout, false, 'submitted');
+          if (!res || !res.success) {
+            throw new Error(res?.message || "Failed to submit shift claim.");
+          }
         }
       }
       showToast("Claim form submitted to admin successfully!", "success");
       setSelectedClaimIds([]);
     } catch (e) {
       console.error(e);
-      showToast("Failed to submit claim form.", "error");
+      showToast(e.message || "Failed to submit claim form.", "error");
     }
   };
 
