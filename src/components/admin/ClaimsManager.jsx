@@ -183,45 +183,55 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
             size: landscape;
             margin: 10mm;
           }
+          
+          /* Reset layout, spacing, and scaling/transforms for all containers on print */
+          html, body, #root, .app-container, .main-content, .card, .modal-overlay {
+            display: block !important;
+            position: static !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            max-width: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            transform: none !important;
+            animation: none !important;
+            transition: none !important;
+            backdrop-filter: none !important;
+            filter: none !important;
+          }
+          
+          /* Disable transforms, animations and transitions globally during print to avoid scaling bugs */
+          *, *::before, *::after {
+            transform: none !important;
+            animation: none !important;
+            transition: none !important;
+          }
+
           body * {
             visibility: hidden;
           }
+
           #printable-admin-claim-sheet, #printable-admin-claim-sheet * {
             visibility: visible;
           }
+
           #printable-admin-claim-sheet {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            background: white;
-            color: black;
-            padding: 0;
-            margin: 0;
+            position: static !important;
+            display: block !important;
+            width: 100% !important;
+            height: auto !important;
+            background: white !important;
+            color: black !important;
+            padding: 0 !important;
+            margin: 0 !important;
             overflow: visible !important;
           }
-          .modal-overlay {
-            position: static !important;
-            background: transparent !important;
-            backdrop-filter: none !important;
-            padding: 0 !important;
-            display: block !important;
-            width: 100% !important;
-            height: auto !important;
-            min-height: auto !important;
-            z-index: auto !important;
-          }
-          .modal-overlay > .card {
-            position: static !important;
-            max-width: none !important;
-            max-height: none !important;
-            box-shadow: none !important;
-            border: none !important;
-            background: transparent !important;
-            display: block !important;
-            width: 100% !important;
-            height: auto !important;
-          }
+
           .no-print {
             display: none !important;
           }
