@@ -47,12 +47,17 @@ export default function PhoneAttendanceTab({
 }) {
   const [selectedJobId, setSelectedJobId] = useState('');
 
-  // Redesigned attendance selection synchronization
+  // Redesigned attendance selection synchronization (default to active clocked-in job if any)
   useEffect(() => {
     if (!selectedJobId && jobs && jobs.length > 0) {
-      setSelectedJobId(jobs[0].id);
+      const activeShift = shifts.find(s => s.workerId === partTimerSession?.id && s.status === 'active');
+      if (activeShift && jobs.some(j => j.id === activeShift.jobId)) {
+        setSelectedJobId(activeShift.jobId);
+      } else {
+        setSelectedJobId(jobs[0].id);
+      }
     }
-  }, [jobs, selectedJobId]);
+  }, [jobs, shifts, partTimerSession, selectedJobId]);
 
   const selectedJob = jobs.find(job => job.id === selectedJobId) || jobs[0];
 
