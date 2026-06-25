@@ -28,40 +28,24 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
   const [showAdminFormModal, setShowAdminFormModal] = useState(false);
   const [modalClaim, setModalClaim] = useState(null);
 
-  const handleDownloadHTML = () => {
+  const handleDownloadPDF = () => {
     const element = document.getElementById('printable-admin-claim-sheet');
     if (!element) return;
-    const htmlContent = element.innerHTML;
-    const fullHtml = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Claim Form - ${selectedUser?.name || 'Staff'}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    body { margin: 0; padding: 40px; background-color: #f1f5f9; font-family: 'Outfit', sans-serif; }
-    .claim-container { max-width: 900px; margin: 0 auto; background: white; padding: 40px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 8px; color: black; }
-    @media print {
-      @page { size: landscape; margin: 20mm; }
-      body { background-color: white; padding: 0; }
-      .claim-container { box-shadow: none; padding: 0; max-width: 100%; }
+    
+    const opt = {
+      margin:       10,
+      filename:     `Claim_Form_${(selectedUser?.name || 'Staff').replace(/\s+/g, '_')}_${new Date().toISOString().substring(0, 10)}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true, logging: false },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    };
+    
+    if (window.html2pdf) {
+      window.html2pdf().set(opt).from(element).save();
+      showToast("PDF Claim Form downloaded successfully!", "success");
+    } else {
+      showToast("PDF generation library is loading. Please try again in a moment.", "error");
     }
-  </style>
-</head>
-<body>
-  <div class="claim-container">${htmlContent}</div>
-</body>
-</html>`;
-    const blob = new Blob([fullHtml], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Claim_Form_${(selectedUser?.name || 'Staff').replace(/\s+/g, '_')}_${new Date().toISOString().substring(0, 10)}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showToast("Claim form downloaded successfully!", "success");
   };
 
 
@@ -464,11 +448,11 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
               <h3 style={{ fontSize: '0.95rem', fontWeight: 700 }}>Claim Form Viewer</h3>
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <button
-                  onClick={handleDownloadHTML}
+                  onClick={handleDownloadPDF}
                   className="btn btn-secondary"
-                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', height: '30px', backgroundColor: '#e2e8f0', color: '#1e293b', borderColor: '#cbd5e1' }}
+                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', height: '30px', backgroundColor: '#e0f2fe', color: '#0369a1', borderColor: '#bae6fd' }}
                 >
-                  <Download size={13} /> Download Form
+                  <FileText size={13} /> Download PDF
                 </button>
                 <button
                   onClick={() => window.print()}
@@ -562,7 +546,11 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
                     <td style={{ border: '1px solid black', padding: '6px', fontWeight: 700, backgroundColor: '#f8fafc' }}>IC:</td>
                     <td style={{ border: '1px solid black', padding: '6px' }}>{selectedUser?.icNumber}</td>
                     <td style={{ border: '1px solid black', padding: '6px', fontWeight: 700, backgroundColor: '#f8fafc' }}>Account Number:</td>
-                    <td style={{ border: '1px solid black', padding: '6px' }}>{selectedUser?.bankAccount || '—'}</td>
+                    <td style={{ border: '1px solid black', padding: '6px' }}>
+                      {selectedUser?.bankAccount 
+                        ? `${selectedUser.bankAccount}${selectedUser.bankName ? ` (${selectedUser.bankName})` : ''}` 
+                        : '—'}
+                    </td>
                   </tr>
                   <tr>
                     <td style={{ border: '1px solid black', padding: '6px', fontWeight: 700, backgroundColor: '#f8fafc' }}>Date:</td>
