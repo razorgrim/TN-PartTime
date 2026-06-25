@@ -16,6 +16,54 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
   const [claimSearchQuery, setClaimSearchQuery] = useState('');
   const [claimStatusFilter, setClaimStatusFilter] = useState('all');
 
+  const getDailyClaims = (workerShifts) => {
+    const groups = {};
+    workerShifts.forEach(shift => {
+      const dateStr = shift.clockInTime.substring(0, 10);
+      if (!groups[dateStr]) {
+        groups[dateStr] = {
+          date: dateStr,
+          shifts: [],
+          jobTitles: [],
+          locations: [],
+          totalDuration: 0,
+          claimStatus: 'approved',
+        };
+      }
+      groups[dateStr].shifts.push(shift);
+      if (!groups[dateStr].jobTitles.includes(shift.jobTitle)) {
+        groups[dateStr].jobTitles.push(shift.jobTitle);
+      }
+      if (!groups[dateStr].locations.includes(shift.locationName)) {
+        groups[dateStr].locations.push(shift.locationName);
+      }
+      groups[dateStr].totalDuration += (shift.durationMinutes || 0);
+      if (shift.claimStatus === 'pending') {
+        groups[dateStr].claimStatus = 'pending';
+      }
+    });
+
+    return Object.values(groups).map(group => {
+      group.shifts.sort((a, b) => new Date(a.clockInTime) - new Date(b.clockInTime));
+      const hasPayout = group.shifts.some(s => s.payout !== null);
+      const totalPayout = hasPayout
+        ? group.shifts.reduce((sum, s) => sum + parseFloat(s.payout || 0), 0)
+        : 100.00;
+
+      return {
+        id: `daily-${group.date}`,
+        date: group.date,
+        jobTitle: group.jobTitles.join(' + '),
+        locationName: group.locations.join('; '),
+        payRate: 100.00,
+        payout: totalPayout,
+        claimStatus: group.claimStatus,
+        durationMinutes: group.totalDuration,
+        shifts: group.shifts
+      };
+    });
+  };
+
   // Master View: Staff list with claim stats
   if (!selectedClaimStaffId) {
     return (
@@ -24,14 +72,14 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
           <Wallet size={18} /> e-Claims Approval & Payout Adjustments
         </h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-          Select a staff member below to view, adjust, and approve their individual e-claims.
+          Select a staff member below to view, adjust, and approve their individual daily e-claims (flat rate RM 100/day).
         </p>
         <div className="table-wrapper">
           <table className="admin-table">
             <thead>
               <tr>
                 <th>Staff Member</th>
-                <th>Total Claims</th>
+                <th>Total Claims (Days)</th>
                 <th>Pending Approval</th>
                 <th>Approved Claims</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
@@ -47,9 +95,10 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
               ) : (
                 users.filter(u => u.role === 'part-timer').map(pt => {
                   const staffShifts = shifts.filter(s => s.status === 'completed' && s.workerId === pt.id);
-                  const total = staffShifts.length;
-                  const pending = staffShifts.filter(s => s.claimStatus === 'pending').length;
-                  const approved = staffShifts.filter(s => s.claimStatus === 'approved').length;
+                  const dailyClaims = getDailyClaims(staffShifts);
+                  const total = dailyClaims.length;
+                  const pending = dailyClaims.filter(c => c.claimStatus === 'pending').length;
+                  const approved = dailyClaims.filter(c => c.claimStatus === 'approved').length;
 
                   return (
                     <tr key={pt.id} style={{ cursor: 'pointer' }} onClick={() => setSelectedClaimStaffId(pt.id)}>
@@ -101,10 +150,11 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
 
   // Detail View: Claims of selected staff member
   const selectedUser = users.find(u => u.id === selectedClaimStaffId);
-  const staffClaims = shifts.filter(s => s.status === 'completed' && s.workerId === selectedClaimStaffId);
-  const filteredClaims = staffClaims.filter(s => {
-    const matchesSearch = s.jobTitle.toLowerCase().includes(claimSearchQuery.toLowerCase()) || s.locationName.toLowerCase().includes(claimSearchQuery.toLowerCase());
-    const matchesStatus = claimStatusFilter === 'all' || s.claimStatus === claimStatusFilter;
+  const rawStaffShifts = shifts.filter(s => s.status === 'completed' && s.workerId === selectedClaimStaffId);
+  const staffDailyClaims = getDailyClaims(rawStaffShifts);
+  const filteredClaims = staffDailyClaims.filter(c => {
+    const matchesSearch = c.jobTitle.toLowerCase().includes(claimSearchQuery.toLowerCase()) || c.locationName.toLowerCase().includes(claimSearchQuery.toLowerCase());
+    const matchesStatus = claimStatusFilter === 'all' || c.claimStatus === claimStatusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -172,9 +222,9 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Job Title & Location</th>
-              <th>Clock In / Out Details</th>
-              <th>Job Rate (RM)</th>
+              <th>Date & Consolidated Site Details</th>
+              <th style={{ width: '40%' }}>Clock In / Out Details per Site</th>
+              <th>Daily Rate (RM)</th>
               <th>Approved Payout (RM)</th>
               <th style={{ textAlign: 'right' }}>Actions & Status</th>
             </tr>
@@ -190,13 +240,28 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
               filteredClaims.map(claim => (
                 <tr key={claim.id}>
                   <td>
-                    <div style={{ fontWeight: 600 }}>{claim.jobTitle}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{claim.locationName}</div>
+                    <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                      {new Date(claim.date + 'T00:00:00').toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
+                    <div style={{ fontWeight: 500, fontSize: '0.8rem', marginTop: '4px' }}>{claim.jobTitle}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{claim.locationName}</div>
                   </td>
-                  <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                    <div><strong>In:</strong> {new Date(claim.clockInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                    <div><strong>Out:</strong> {new Date(claim.clockOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                    <div><strong>Duration:</strong> {formatDuration(claim.durationMinutes)}</div>
+                  <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {claim.shifts.map((s, idx) => (
+                        <div key={s.id} style={{ borderBottom: idx < claim.shifts.length - 1 ? '1px solid #f1f5f9' : 'none', paddingBottom: '6px' }}>
+                          <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{s.jobTitle}</div>
+                          <div>
+                            <strong>In:</strong> {new Date(s.clockInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {s.clockOutTime && ` | Out: ${new Date(s.clockOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                          </div>
+                          <div><strong>Duration:</strong> {formatDuration(s.durationMinutes)}</div>
+                        </div>
+                      ))}
+                      <div style={{ fontWeight: 700, color: 'var(--primary)', marginTop: '4px', borderTop: claim.shifts.length > 1 ? '1px dashed var(--border-color)' : 'none', paddingTop: claim.shifts.length > 1 ? '4px' : '0' }}>
+                        Total Duration: {formatDuration(claim.durationMinutes)}
+                      </div>
+                    </div>
                   </td>
                   <td>
                     <input 
@@ -212,7 +277,7 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
                       type="number" 
                       className="form-input" 
                       style={{ padding: '4px 8px', fontSize: '0.85rem', width: '80px', height: '28px', fontWeight: 'bold' }}
-                      defaultValue={claim.payout || claim.payRate}
+                      defaultValue={claim.payout}
                       id={`payout-${claim.id}`}
                     />
                   </td>
@@ -225,8 +290,14 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
                           const rateVal = parseFloat(document.getElementById(`rate-${claim.id}`).value);
                           const payoutVal = parseFloat(document.getElementById(`payout-${claim.id}`).value);
                           if (!isNaN(rateVal) && !isNaN(payoutVal)) {
-                            await adjustShiftPayout(claim.id, rateVal, payoutVal, true);
-                            showToast("Claim payout updated and approved successfully", "success");
+                            // Approve all shifts on this day
+                            for (let i = 0; i < claim.shifts.length; i++) {
+                              const shift = claim.shifts[i];
+                              const targetRate = i === 0 ? rateVal : 0;
+                              const targetPayout = i === 0 ? payoutVal : 0;
+                              await adjustShiftPayout(shift.id, targetRate, targetPayout, true);
+                            }
+                            showToast("Daily claim updated and approved successfully", "success");
                           } else {
                             showToast("Please enter valid numbers", "error");
                           }
