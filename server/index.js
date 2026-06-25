@@ -562,8 +562,22 @@ app.put('/api/shifts/:id/payout', async (req, res) => {
 
   try {
     const db = getDb();
+    
+    // Fallback to existing values if not provided in req.body
+    const [existing] = await db.query('SELECT * FROM shifts WHERE id = ?', [id]);
+    if (existing.length === 0) {
+      return res.status(404).json({ success: false, error: 'Shift not found.' });
+    }
+    const currentShift = existing[0];
+
+    const finalPayRate = payRate !== undefined ? parseFloat(payRate) : parseFloat(currentShift.payRate);
+    const finalPayout = payout !== undefined && payout !== null ? parseFloat(payout) : parseFloat(currentShift.payout || 0);
+
     let query = `UPDATE shifts SET payRate = ?, payout = ?`;
-    const params = [parseFloat(payRate), parseFloat(payout)];
+    const params = [
+      isNaN(finalPayRate) ? 0 : finalPayRate,
+      isNaN(finalPayout) ? 0 : finalPayout
+    ];
 
     if (claimStatus) {
       query += `, claimStatus = ?`;
