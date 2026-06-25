@@ -51,9 +51,19 @@ export default function PhoneClaimsTab({ partTimerSession, shifts, claims, showT
   const selectedClaims = dailyClaims.filter(c => selectedClaimIds.includes(c.id));
   const selectedTotalAmount = selectedClaims.reduce((acc, c) => acc + parseFloat(c.payout || 0), 0);
 
+  const isBankDetailEmpty = (val) => {
+    if (val === null || val === undefined) return true;
+    const s = String(val).trim();
+    return s === "" || s.toLowerCase() === "null" || s === "—" || s === "-";
+  };
+
   const handleSubmitClaims = async () => {
     // Verify bank details are completed
-    if (!partTimerSession?.bankName || !partTimerSession?.bankAccount || !partTimerSession?.bankHolder) {
+    if (
+      isBankDetailEmpty(partTimerSession?.bankName) || 
+      isBankDetailEmpty(partTimerSession?.bankAccount) || 
+      isBankDetailEmpty(partTimerSession?.bankHolder)
+    ) {
       showToast("Please complete your bank details on your Profile tab before submitting claims.", "error");
       return;
     }
@@ -74,6 +84,11 @@ export default function PhoneClaimsTab({ partTimerSession, shifts, claims, showT
     }
   };
 
+  const hasMissingBankDetails = 
+    isBankDetailEmpty(partTimerSession?.bankName) || 
+    isBankDetailEmpty(partTimerSession?.bankAccount) || 
+    isBankDetailEmpty(partTimerSession?.bankHolder);
+
   return (
     <div className="phone-tab-screen" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div className="phone-screen-header">
@@ -81,6 +96,31 @@ export default function PhoneClaimsTab({ partTimerSession, shifts, claims, showT
       </div>
 
       <div style={{ padding: '1.25rem', paddingBottom: selectedClaims.length > 0 ? '160px' : '90px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {/* Missing Bank Details Warning Banner */}
+        {hasMissingBankDetails && (
+          <div 
+            style={{ 
+              backgroundColor: '#fef2f2', 
+              border: '1px solid #fee2e2', 
+              borderRadius: '12px', 
+              padding: '0.75rem 1rem', 
+              color: '#991b1b', 
+              fontSize: '0.75rem',
+              fontWeight: 500,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px'
+            }}
+          >
+            <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              ⚠️ Bank Details Required
+            </div>
+            <div>
+              Please fill in your bank details under the <strong>Profile</strong> tab before you can submit any claims.
+            </div>
+          </div>
+        )}
+
         {/* Claims Summary */}
         <div className="claims-summary-card">
           <div>
