@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { ChevronLeft, Calendar, ShieldAlert, CheckCircle2, MapPin, Fingerprint, Clock } from 'lucide-react';
+import { AppContext } from '../../context/AppContext';
 
 const deg2rad = (deg) => deg * (Math.PI / 180);
 const getDistanceKm = (lat1, lon1, lat2, lon2) => {
@@ -29,6 +30,21 @@ const formatDuration = (minutes) => {
   return `${mins}m`;
 };
 
+const parseLocalDate = (dateStr) => {
+  if (!dateStr) return new Date();
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const isSameDate = (isoString, dateStr) => {
+  if (!isoString) return false;
+  const dateObj = new Date(isoString);
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const d = String(dateObj.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}` === dateStr;
+};
+
 export default function PhoneAttendanceTab({
   partTimerSession,
   jobs,
@@ -45,6 +61,7 @@ export default function PhoneAttendanceTab({
   getBrowserLocation,
   showToast
 }) {
+  const { simulatedDate, setSimulatedDate } = useContext(AppContext);
   const [selectedJobId, setSelectedJobId] = useState('');
 
   // Redesigned attendance selection synchronization (default to active clocked-in job if any)
@@ -78,8 +95,15 @@ export default function PhoneAttendanceTab({
     ? shifts.find(s => s.workerId === partTimerSession?.id && s.jobId === selectedJob.id && s.status === 'active')
     : null;
 
+  const targetDateStr = simulatedDate || new Date().toISOString().split('T')[0];
+
   const userJobCompletedShift = selectedJob
-    ? shifts.find(s => s.workerId === partTimerSession?.id && s.jobId === selectedJob.id && s.status === 'completed')
+    ? shifts.find(s => 
+        s.workerId === partTimerSession?.id && 
+        s.jobId === selectedJob.id && 
+        s.status === 'completed' &&
+        isSameDate(s.clockInTime, targetDateStr)
+      )
     : null;
 
   // Check if user has an active shift on ANY job
@@ -231,7 +255,9 @@ export default function PhoneAttendanceTab({
         <div className="attendance-clock">{simulatedTime}</div>
         <div className="attendance-date">
           <Calendar size={14} />
-          <span>{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
+          <span>{simulatedDate 
+            ? parseLocalDate(simulatedDate).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+            : new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
         </div>
 
         {/* Map Card */}
@@ -345,6 +371,134 @@ export default function PhoneAttendanceTab({
             No Job Allocated
           </div>
         )}
+
+        {/* Date Simulation Controls */}
+        <div 
+          className="attendance-task-card animate-scale" 
+          style={{ 
+            borderLeft: '3px solid #f59e0b', 
+            backgroundColor: '#fffbeb',
+            padding: '0.75rem',
+            marginTop: '0.75rem',
+            marginBottom: '0.25rem',
+            borderRadius: '8px'
+          }}
+        >
+          <span style={{ 
+            color: '#b45309', 
+            fontSize: '0.65rem', 
+            fontWeight: 800, 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '6px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em'
+          }}>
+            <Calendar size={13} style={{ color: '#b45309' }} /> Simulation Date Override
+          </span>
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', alignItems: 'center' }}>
+            <input
+              type="date"
+              value={simulatedDate}
+              onChange={(e) => setSimulatedDate(e.target.value)}
+              style={{
+                margin: 0,
+                padding: '0.35rem 0.5rem',
+                fontSize: '0.75rem',
+                border: '1px solid #fde68a',
+                borderRadius: '6px',
+                flex: 1,
+                backgroundColor: 'white',
+                outline: 'none',
+                color: '#1e293b'
+              }}
+            />
+            {simulatedDate && (
+              <button
+                type="button"
+                onClick={() => setSimulatedDate('')}
+                style={{
+                  padding: '0.35rem 0.65rem',
+                  fontSize: '0.7rem',
+                  backgroundColor: '#f3f4f6',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  color: '#374151',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => {
+                const d = new Date();
+                const yst = new Date(d.setDate(d.getDate() - 1));
+                setSimulatedDate(yst.toISOString().split('T')[0]);
+              }}
+              style={{
+                border: '1px solid #fde68a',
+                background: '#fef3c7',
+                color: '#b45309',
+                fontSize: '0.625rem',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 600
+              }}
+            >
+              Yesterday
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSimulatedDate(new Date().toISOString().split('T')[0]);
+              }}
+              style={{
+                border: '1px solid #fde68a',
+                background: '#fef3c7',
+                color: '#b45309',
+                fontSize: '0.625rem',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 600
+              }}
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const d = new Date();
+                const tmr = new Date(d.setDate(d.getDate() + 1));
+                setSimulatedDate(tmr.toISOString().split('T')[0]);
+              }}
+              style={{
+                border: '1px solid #fde68a',
+                background: '#fef3c7',
+                color: '#b45309',
+                fontSize: '0.625rem',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 600
+              }}
+            >
+              Tomorrow
+            </button>
+          </div>
+          <p style={{ fontSize: '0.625rem', color: '#b45309', marginTop: '0.4rem', lineHeight: '1.3' }}>
+            {simulatedDate
+              ? `Active: Clock in/out will record on ${parseLocalDate(simulatedDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}.`
+              : 'Using real system date & time for clocking in/out.'
+            }
+          </p>
+        </div>
 
         {/* 4 Summary Columns Row */}
         <div className="attendance-summary-row">

@@ -18,6 +18,18 @@ export const AppProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : null;
   });
 
+  const [simulatedDate, setSimulatedDate] = useState(() => {
+    return localStorage.getItem('pt_simulated_date') || '';
+  });
+
+  useEffect(() => {
+    if (simulatedDate) {
+      localStorage.setItem('pt_simulated_date', simulatedDate);
+    } else {
+      localStorage.removeItem('pt_simulated_date');
+    }
+  }, [simulatedDate]);
+
   // Helper to extract last 4 digits of IC (digits only)
   const getICLast4 = (ic) => {
     if (!ic) return '';
@@ -268,13 +280,32 @@ export const AppProvider = ({ children }) => {
     setPartTimerSession(null);
   };
 
+  const getCustomTime = () => {
+    if (!simulatedDate) return null;
+    const now = new Date();
+    const offsetMin = now.getTimezoneOffset();
+    const offsetSign = offsetMin <= 0 ? '+' : '-';
+    const absOffsetMin = Math.abs(offsetMin);
+    const offsetHours = String(Math.floor(absOffsetMin / 60)).padStart(2, '0');
+    const offsetMins = String(absOffsetMin % 60).padStart(2, '0');
+    const tzOffset = `${offsetSign}${offsetHours}:${offsetMins}`;
+
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const ms = String(now.getMilliseconds()).padStart(3, '0');
+    
+    return `${simulatedDate}T${hours}:${minutes}:${seconds}.${ms}${tzOffset}`;
+  };
+
   // Clock In to a Job (creates a shift record)
   const clockInJob = async (jobId, distance, workerId, workerName) => {
     try {
+      const customTime = getCustomTime();
       const res = await fetch('/api/shifts/clockin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jobId, distance, workerId, workerName })
+        body: JSON.stringify({ jobId, distance, workerId, workerName, customTime })
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -288,10 +319,11 @@ export const AppProvider = ({ children }) => {
   // Clock Out of a Job (completes active shift record, sets initial payout and claim status)
   const clockOutJob = async (jobId, workerId, distance, simulatedDurationMinutes = null) => {
     try {
+      const customTime = getCustomTime();
       const res = await fetch('/api/shifts/clockout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jobId, workerId, distance, simulatedDurationMinutes })
+        body: JSON.stringify({ jobId, workerId, distance, simulatedDurationMinutes, customTime })
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -426,7 +458,9 @@ export const AppProvider = ({ children }) => {
       updateJob,
       updateStaff,
       clearShifts,
-      updateStaffProfile
+      updateStaffProfile,
+      simulatedDate,
+      setSimulatedDate
     }}>
       {children}
     </AppContext.Provider>

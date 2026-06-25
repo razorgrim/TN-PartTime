@@ -470,7 +470,7 @@ app.delete('/api/shifts', async (req, res) => {
 
 // Clock-in Job
 app.post('/api/shifts/clockin', async (req, res) => {
-  const { jobId, distance, workerId, workerName } = req.body;
+  const { jobId, distance, workerId, workerName, customTime } = req.body;
   if (!jobId || distance === undefined || !workerId || !workerName) {
     return res.status(400).json({ error: 'Missing clock-in data.' });
   }
@@ -492,7 +492,7 @@ app.post('/api/shifts/clockin', async (req, res) => {
     }
 
     const id = 'shift-' + Date.now();
-    const clockInTime = new Date().toISOString();
+    const clockInTime = customTime || new Date().toISOString();
 
     await db.query(`
       INSERT INTO shifts (id, jobId, jobTitle, locationName, payRate, workerId, workerName, status, clockInTime, clockInDistance)
@@ -509,7 +509,7 @@ app.post('/api/shifts/clockin', async (req, res) => {
 
 // Clock-out Job
 app.post('/api/shifts/clockout', async (req, res) => {
-  const { jobId, workerId, distance, simulatedDurationMinutes } = req.body;
+  const { jobId, workerId, distance, simulatedDurationMinutes, customTime } = req.body;
   if (!jobId || !workerId || distance === undefined) {
     return res.status(400).json({ error: 'Missing clock-out data.' });
   }
@@ -526,7 +526,7 @@ app.post('/api/shifts/clockout', async (req, res) => {
       return res.status(404).json({ error: 'Active shift not found.' });
     }
 
-    let clockOutTime = new Date().toISOString();
+    let clockOutTime = customTime || new Date().toISOString();
     let durationMinutes = 0;
 
     if (simulatedDurationMinutes !== null && simulatedDurationMinutes !== undefined && !isNaN(simulatedDurationMinutes)) {
@@ -535,7 +535,9 @@ app.post('/api/shifts/clockout', async (req, res) => {
       const clockOutDate = new Date(clockInDate.getTime() + durationMinutes * 60 * 1000);
       clockOutTime = clockOutDate.toISOString();
     } else {
-      const diffMs = new Date() - new Date(shift.clockInTime);
+      const clockInDate = new Date(shift.clockInTime);
+      const clockOutDate = customTime ? new Date(customTime) : new Date();
+      const diffMs = clockOutDate - clockInDate;
       durationMinutes = Math.max(1, Math.round(diffMs / (60 * 1000)));
     }
 
