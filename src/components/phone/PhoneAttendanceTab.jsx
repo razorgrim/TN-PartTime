@@ -6,9 +6,9 @@ const getDistanceKm = (lat1, lon1, lat2, lon2) => {
   const R = 6371; // Radius of the earth in km
   const dLat = deg2rad(lat2 - lat1);
   const dLon = deg2rad(lon2 - lon1);
-  const a = 
+  const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
@@ -60,16 +60,16 @@ export default function PhoneAttendanceTab({
 
   const realDist = userCoords && selectedJob?.latitude && selectedJob?.longitude
     ? getDistanceKm(
-        userCoords.latitude,
-        userCoords.longitude,
-        parseFloat(selectedJob.latitude),
-        parseFloat(selectedJob.longitude)
-      )
+      userCoords.latitude,
+      userCoords.longitude,
+      parseFloat(selectedJob.latitude),
+      parseFloat(selectedJob.longitude)
+    )
     : null;
   const distanceMeters = realDist !== null ? Math.round(realDist * 1000) : null;
 
   // User-specific shifts for the currently selected job
-  const userJobActiveShift = selectedJob 
+  const userJobActiveShift = selectedJob
     ? shifts.find(s => s.workerId === partTimerSession?.id && s.jobId === selectedJob.id && s.status === 'active')
     : null;
 
@@ -228,15 +228,15 @@ export default function PhoneAttendanceTab({
 
         {/* Map Card */}
         {selectedJob ? (
-          <div 
+          <div
             className="attendance-map-card"
             style={{ position: 'relative', overflow: 'hidden', padding: 0 }}
           >
-            <div 
-              id="staff-map" 
+            <div
+              id="staff-map"
               style={{ width: '100%', height: '100%', zIndex: 1 }}
             ></div>
-            
+
             <div style={{ position: 'absolute', top: '8px', left: '8px', right: '8px', zIndex: 10 }}>
               {gpsLoading ? (
                 <div className="attendance-gps-banner" style={{ backgroundColor: '#eff6ff', color: '#1e40af', borderColor: '#bfdbfe', margin: 0 }}>
@@ -244,8 +244,8 @@ export default function PhoneAttendanceTab({
                   <span>Verifying location...</span>
                 </div>
               ) : (
-                <div 
-                  className={`attendance-gps-banner ${gpsError ? 'attendance-gps-banner-warn' : 'attendance-gps-banner-ok'}`} 
+                <div
+                  className={`attendance-gps-banner ${gpsError ? 'attendance-gps-banner-warn' : 'attendance-gps-banner-ok'}`}
                   style={{ margin: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px', width: '100%' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1, minWidth: '120px' }}>
@@ -343,8 +343,8 @@ export default function PhoneAttendanceTab({
           <div className="attendance-summary-col">
             <span className="col-title col-title-in">Clock In</span>
             <span className="col-value">
-              {userJobActiveShift 
-                ? formatTime(userJobActiveShift.clockInTime) 
+              {userJobActiveShift
+                ? formatTime(userJobActiveShift.clockInTime)
                 : (userJobCompletedShift ? formatTime(userJobCompletedShift.clockInTime) : '--:--')}
             </span>
           </div>
@@ -359,8 +359,8 @@ export default function PhoneAttendanceTab({
           <div className="attendance-summary-col">
             <span className="col-title col-title-total">Total</span>
             <span className="col-value">
-              {userJobCompletedShift 
-                ? formatDuration(userJobCompletedShift.durationMinutes) 
+              {userJobCompletedShift
+                ? formatDuration(userJobCompletedShift.durationMinutes)
                 : '--'}
             </span>
           </div>
@@ -371,7 +371,7 @@ export default function PhoneAttendanceTab({
           <span className="attendance-task-title">PROJECT / SITE TASK</span>
           {jobs.length > 0 ? (
             <>
-              <select 
+              <select
                 className="attendance-task-select"
                 value={selectedJobId}
                 onChange={(e) => setSelectedJobId(e.target.value)}
@@ -401,17 +401,17 @@ export default function PhoneAttendanceTab({
 
                 {/* Status Badges */}
                 <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.15rem' }}>
-                  <span style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 700 }}>
+                  {/*<span style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 700 }}>
                     RM {Number(selectedJob?.payRate || 0).toFixed(2)} / Job
-                  </span>
-                  
+                  </span>*/}
+
                   {distanceMeters !== null ? (
-                    <span style={{ 
-                      backgroundColor: distanceMeters <= 120 ? '#d1fae5' : '#fee2e2', 
-                      color: distanceMeters <= 120 ? '#065f46' : '#991b1b', 
-                      padding: '3px 8px', 
-                      borderRadius: '6px', 
-                      fontSize: '0.65rem', 
+                    <span style={{
+                      backgroundColor: distanceMeters <= 120 ? '#d1fae5' : '#fee2e2',
+                      color: distanceMeters <= 120 ? '#065f46' : '#991b1b',
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      fontSize: '0.65rem',
                       fontWeight: 700,
                       border: `1px solid ${distanceMeters <= 120 ? '#a7f3d0' : '#fca5a5'}`
                     }}>
@@ -443,7 +443,7 @@ export default function PhoneAttendanceTab({
         {selectedJob ? (
           <div style={{ marginBottom: '1.5rem' }}>
             {(!userJobActiveShift && !userJobCompletedShift) && (
-              <button 
+              <button
                 className="attendance-large-btn attendance-large-btn-in animate-scale"
                 onClick={() => handleClockIn(selectedJob.id)}
               >
@@ -452,7 +452,7 @@ export default function PhoneAttendanceTab({
               </button>
             )}
             {userJobActiveShift && (
-              <button 
+              <button
                 className="attendance-large-btn attendance-large-btn-out animate-scale"
                 onClick={() => handleClockOut(selectedJob.id)}
               >
@@ -461,7 +461,7 @@ export default function PhoneAttendanceTab({
               </button>
             )}
             {(userJobCompletedShift && !userJobActiveShift) && (
-              <button 
+              <button
                 className="attendance-large-btn attendance-large-btn-done animate-scale"
                 disabled
               >
@@ -474,9 +474,9 @@ export default function PhoneAttendanceTab({
 
         {/* Real GPS Refresh Button */}
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem', marginBottom: '2rem' }}>
-          <button 
-            type="button" 
-            className="btn btn-secondary btn-sm" 
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
             onClick={getBrowserLocation}
             style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           >
