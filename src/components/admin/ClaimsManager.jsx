@@ -181,6 +181,7 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
         @media print {
           @page {
             size: landscape;
+            margin: 10mm;
           }
           body * {
             visibility: hidden;
@@ -195,8 +196,31 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
             width: 100%;
             background: white;
             color: black;
-            padding: 20px;
-            font-size: 11px;
+            padding: 0;
+            margin: 0;
+            overflow: visible !important;
+          }
+          .modal-overlay {
+            position: static !important;
+            background: transparent !important;
+            backdrop-filter: none !important;
+            padding: 0 !important;
+            display: block !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: auto !important;
+            z-index: auto !important;
+          }
+          .modal-overlay > .card {
+            position: static !important;
+            max-width: none !important;
+            max-height: none !important;
+            box-shadow: none !important;
+            border: none !important;
+            background: transparent !important;
+            display: block !important;
+            width: 100% !important;
+            height: auto !important;
           }
           .no-print {
             display: none !important;
@@ -403,7 +427,7 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
       {/* Admin Claim Form Modal View */}
       {showAdminFormModal && modalClaim && (
         <div 
-          className="modal-overlay no-print"
+          className="modal-overlay"
           style={{
             position: 'fixed',
             top: 0,
@@ -436,6 +460,7 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
           >
             {/* Modal Controls Header */}
             <div 
+              className="no-print"
               style={{ 
                 padding: '0.75rem 1.25rem', 
                 borderBottom: '1px solid var(--border-color)', 
