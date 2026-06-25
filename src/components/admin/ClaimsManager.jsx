@@ -64,25 +64,7 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
     showToast("Claim form downloaded successfully!", "success");
   };
 
-  const handleDownloadPDF = () => {
-    const element = document.getElementById('printable-admin-claim-sheet');
-    if (!element) return;
-    
-    const opt = {
-      margin:       10,
-      filename:     `Claim_Form_${(selectedUser?.name || 'Staff').replace(/\s+/g, '_')}_${new Date().toISOString().substring(0, 10)}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true, logging: false },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
-    };
-    
-    if (window.html2pdf) {
-      window.html2pdf().set(opt).from(element).save();
-      showToast("PDF Claim Form downloaded successfully!", "success");
-    } else {
-      showToast("PDF generation library is loading. Please try again in a moment.", "error");
-    }
-  };
+
 
   const getWorkerClaims = (workerId, workerShifts) => {
     const workerClaims = claims.filter(c => c.workerId === workerId);
@@ -489,13 +471,6 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
                   <Download size={13} /> Download Form
                 </button>
                 <button
-                  onClick={handleDownloadPDF}
-                  className="btn btn-secondary"
-                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', height: '30px', backgroundColor: '#e0f2fe', color: '#0369a1', borderColor: '#bae6fd' }}
-                >
-                  <FileText size={13} /> Download PDF
-                </button>
-                <button
                   onClick={() => window.print()}
                   className="btn btn-secondary"
                   style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', height: '30px' }}
@@ -571,7 +546,7 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
                   backgroundColor: '#f8fafc'
                 }}
               >
-                {"ENGINEER " + (selectedUser?.name || '').toUpperCase()}
+                {((selectedUser?.salutation || 'En').replace(/\.$/, '') + ' ' + (selectedUser?.name || '') + ' CLAIM').toUpperCase()}
               </div>
 
               {/* Employee Information Table */}
@@ -607,8 +582,8 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
                     <th style={{ border: '1px solid black', padding: '8px', textAlign: 'center', width: '12%' }}>Check in (Hours)</th>
                     <th style={{ border: '1px solid black', padding: '8px', textAlign: 'center', width: '12%' }}>Check Out (Hours)</th>
                     <th style={{ border: '1px solid black', padding: '8px', textAlign: 'left', width: '36%' }}>Location</th>
+                    <th style={{ border: '1px solid black', padding: '8px', textAlign: 'center', width: '10%' }}>Total Hours</th>
                     <th style={{ border: '1px solid black', padding: '8px', textAlign: 'center', width: '10%' }}>Overtime</th>
-                    <th style={{ border: '1px solid black', padding: '8px', textAlign: 'center', width: '10%' }}>Claims</th>
                     <th style={{ border: '1px solid black', padding: '8px', textAlign: 'right', width: '12%' }}>Price (RM)</th>
                   </tr>
                 </thead>
@@ -630,26 +605,16 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
                           <div style={{ fontWeight: 600 }}>{shift.jobTitle}</div>
                           <div style={{ fontSize: '0.65rem', color: '#475569' }}>{shift.locationName}</div>
                         </td>
+                        <td style={{ border: '1px solid black', padding: '6px', textAlign: 'center' }}>
+                          {shift.durationMinutes ? (shift.durationMinutes / 60).toFixed(2) : '—'}
+                        </td>
                         <td style={{ border: '1px solid black', padding: '6px', textAlign: 'center' }}>—</td>
-                        <td style={{ border: '1px solid black', padding: '6px', textAlign: 'center' }}>Daily Flat Rate</td>
                         <td style={{ border: '1px solid black', padding: '6px', textAlign: 'right', fontWeight: 600 }}>
                           RM {idx === 0 ? Number(modalClaim.payout).toFixed(2) : '0.00'}
                         </td>
                       </tr>
                     );
                   })}
-                  {/* Empty rows to match spreadsheet aesthetic if less than 8 items */}
-                  {Array.from({ length: Math.max(0, 8 - modalClaim.shifts.length) }).map((_, idx) => (
-                    <tr key={`empty-${idx}`} style={{ height: '24px' }}>
-                      <td style={{ border: '1px solid black', padding: '6px' }}></td>
-                      <td style={{ border: '1px solid black', padding: '6px' }}></td>
-                      <td style={{ border: '1px solid black', padding: '6px' }}></td>
-                      <td style={{ border: '1px solid black', padding: '6px' }}></td>
-                      <td style={{ border: '1px solid black', padding: '6px' }}></td>
-                      <td style={{ border: '1px solid black', padding: '6px' }}></td>
-                      <td style={{ border: '1px solid black', padding: '6px' }}></td>
-                    </tr>
-                  ))}
                   {/* Total Row */}
                   <tr style={{ backgroundColor: '#f8fafc', fontWeight: 800 }}>
                     <td colSpan="6" style={{ border: '1px solid black', padding: '8px', textAlign: 'right', fontSize: '0.75rem', textTransform: 'uppercase' }}>
