@@ -114,6 +114,17 @@ export async function initializeDatabase() {
       // Ignore if column already exists
     }
 
+    try {
+      await connection.query(`ALTER TABLE shifts ADD COLUMN payout DECIMAL(10, 2) DEFAULT NULL`);
+    } catch (e) {
+      // Ignore if column already exists
+    }
+    try {
+      await connection.query(`ALTER TABLE shifts ADD COLUMN claimStatus VARCHAR(100) DEFAULT NULL`);
+    } catch (e) {
+      // Ignore if column already exists
+    }
+
     // Create shifts table
     await connection.query(`
       CREATE TABLE IF NOT EXISTS shifts (
