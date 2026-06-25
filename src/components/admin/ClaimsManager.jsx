@@ -232,6 +232,55 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
             overflow: visible !important;
           }
 
+          /* Compact scaling to fit exactly 1 page */
+          .letterhead {
+            margin-bottom: 0.5rem !important;
+            padding-bottom: 0.4rem !important;
+            border-bottom-width: 1.5px !important;
+          }
+          .letterhead img {
+            width: 3.25rem !important;
+            height: 3.25rem !important;
+            margin-right: 1rem !important;
+          }
+          .letterhead h2 {
+            font-size: 1.05rem !important;
+          }
+          .letterhead p {
+            font-size: 0.6rem !important;
+            margin-top: 1px !important;
+          }
+
+          .title-banner {
+            font-size: 0.8rem !important;
+            margin-bottom: 0.5rem !important;
+            padding: 4px !important;
+            border-width: 1.5px !important;
+          }
+
+          .info-table {
+            margin-bottom: 0.5rem !important;
+            font-size: 9px !important;
+          }
+          .info-table td {
+            padding: 4px !important;
+          }
+
+          .breakdown-wrapper {
+            margin-bottom: 0.5rem !important;
+          }
+          .breakdown-table {
+            font-size: 9px !important;
+          }
+          .breakdown-table th, .breakdown-table td {
+            padding: 4px !important;
+          }
+          
+          .signature-container {
+            margin-top: 1.5rem !important;
+            font-size: 9px !important;
+          }
+
           .no-print {
             display: none !important;
           }
@@ -534,7 +583,7 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
               }}
             >
               {/* Document Header Letterhead */}
-              <div style={{ display: 'flex', alignItems: 'center', borderBottom: '2px solid black', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
+              <div className="letterhead" style={{ display: 'flex', alignItems: 'center', borderBottom: '2px solid black', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
                 <div style={{ marginRight: '1.5rem' }}>
                   <img src={logoImg} alt="Logo" style={{ width: '4.5rem', height: '4.5rem', objectFit: 'contain' }} />
                 </div>
@@ -553,6 +602,7 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
 
               {/* Title Banner */}
               <div 
+                className="title-banner"
                 style={{ 
                   border: '2px solid black', 
                   padding: '5px', 
@@ -569,7 +619,7 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
               </div>
 
               {/* Employee Information Table */}
-              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1.5rem', fontSize: '0.75rem' }}>
+              <table className="info-table" style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1.5rem', fontSize: '0.75rem' }}>
                 <tbody>
                   <tr>
                     <td style={{ width: '15%', border: '1px solid black', padding: '6px', fontWeight: 700, backgroundColor: '#f8fafc' }}>Employee Name:</td>
@@ -597,8 +647,8 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
               </table>
 
               {/* Claims Details Breakdown Table */}
-              <div style={{ width: '100%', overflowX: 'auto', marginBottom: '1.5rem' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', minWidth: '700px' }}>
+              <div className="breakdown-wrapper" style={{ width: '100%', overflowX: 'auto', marginBottom: '1.5rem' }}>
+              <table className="breakdown-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', minWidth: '700px' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#f1f5f9', fontWeight: 800 }}>
                     <th style={{ border: '1px solid black', padding: '8px', textAlign: 'center', width: '12%' }}>Date</th>
@@ -652,7 +702,7 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
               </div>
 
               {/* Signature Blocks */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '3.5rem', fontSize: '0.72rem' }}>
+              <div className="signature-container" style={{ display: 'flex', justifyContent: 'space-between', marginTop: '3.5rem', fontSize: '0.72rem' }}>
                 <div style={{ borderTop: '1px solid black', width: '200px', textAlign: 'center', paddingTop: '5px' }}>
                   <strong>Submitted By:</strong>
                   <div style={{ marginTop: '2px', color: '#475569' }}>{selectedUser?.name}</div>

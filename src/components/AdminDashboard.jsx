@@ -83,7 +83,7 @@ export default function AdminDashboard({ showToast, onBackToLanding }) {
   return (
     <div className="admin-pane animate-fade">
       {/* Admin Header */}
-      <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.5rem' }}>
+      <div className="card no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.5rem' }}>
         <div>
           <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Control Panel</span>
           <h1 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Welcome, {adminSession.name}</h1>
@@ -94,7 +94,7 @@ export default function AdminDashboard({ showToast, onBackToLanding }) {
       </div>
 
       {/* Admin stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+      <div className="no-print" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
         <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem' }}>
           <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: 'var(--radius-md)', backgroundColor: '#eff6ff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Users size={20} />
@@ -137,7 +137,7 @@ export default function AdminDashboard({ showToast, onBackToLanding }) {
       </div>
 
       {/* Tab Navigation Menu */}
-      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.25rem' }}>
+      <div className="no-print" style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.25rem' }}>
         <button 
           className={`view-btn ${adminTab === 'shifts' ? 'active' : ''}`}
           onClick={() => setAdminTab('shifts')}
