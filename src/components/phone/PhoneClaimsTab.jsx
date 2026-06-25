@@ -117,6 +117,9 @@ export default function PhoneClaimsTab({ partTimerSession, shifts }) {
     <div className="phone-tab-screen" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <style>{`
         @media print {
+          @page {
+            size: landscape;
+          }
           body * {
             visibility: hidden;
           }

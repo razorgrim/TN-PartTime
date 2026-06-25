@@ -196,6 +196,9 @@ export default function ClaimsManager({ users, shifts, adjustShiftPayout, showTo
     <div className="card animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <style>{`
         @media print {
+          @page {
+            size: landscape;
+          }
           body * {
             visibility: hidden;
           }
