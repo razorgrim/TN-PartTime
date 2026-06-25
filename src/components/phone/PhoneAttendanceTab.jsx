@@ -246,36 +246,88 @@ export default function PhoneAttendanceTab({
               ) : (
                 <div 
                   className={`attendance-gps-banner ${gpsError ? 'attendance-gps-banner-warn' : 'attendance-gps-banner-ok'}`} 
-                  style={{ margin: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
+                  style={{ margin: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px', width: '100%' }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1, minWidth: '120px' }}>
                     {gpsError ? <ShieldAlert size={12} style={{ flexShrink: 0 }} /> : <CheckCircle2 size={12} style={{ flexShrink: 0 }} />}
-                    <span style={{ fontSize: '0.75rem', lineHeight: '1.2' }}>
+                    <span style={{ fontSize: '0.72rem', lineHeight: '1.2' }}>
                       {gpsError ? gpsError : `GPS: ${userCoords ? `${userCoords.latitude.toFixed(4)}, ${userCoords.longitude.toFixed(4)}` : 'No signal'}`}
                     </span>
                   </div>
-                  {!userCoords && (
+                  <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                    {!userCoords && (
+                      <button
+                        type="button"
+                        onClick={() => getBrowserLocation()}
+                        style={{
+                          border: 'none',
+                          background: 'var(--primary)',
+                          color: 'white',
+                          fontSize: '0.6rem',
+                          padding: '2px 6px',
+                          borderRadius: '3px',
+                          cursor: 'pointer',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        Retry
+                      </button>
+                    )}
                     <button
                       type="button"
-                      onClick={() => getBrowserLocation()}
+                      onClick={() => {
+                        if (selectedJob) {
+                          setUserCoords({
+                            latitude: parseFloat(selectedJob.latitude) + (Math.random() - 0.5) * 0.0002,
+                            longitude: parseFloat(selectedJob.longitude) + (Math.random() - 0.5) * 0.0002
+                          });
+                          setGpsError(null);
+                          showToast('Simulating GPS coordinates within site radius', 'info');
+                        } else {
+                          showToast('No project selected to simulate coordinates', 'error');
+                        }
+                      }}
                       style={{
                         border: 'none',
                         background: 'var(--primary)',
                         color: 'white',
-                        fontSize: '0.65rem',
-                        padding: '3px 8px',
-                        borderRadius: '4px',
+                        fontSize: '0.6rem',
+                        padding: '2px 6px',
+                        borderRadius: '3px',
                         cursor: 'pointer',
-                        fontWeight: 'bold',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        marginLeft: '8px',
-                        flexShrink: 0
+                        fontWeight: 'bold'
                       }}
                     >
-                      Retry GPS
+                      Mock Near
                     </button>
-                  )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (selectedJob) {
+                          setUserCoords({
+                            latitude: parseFloat(selectedJob.latitude) + 0.01,
+                            longitude: parseFloat(selectedJob.longitude) + 0.01
+                          });
+                          setGpsError(null);
+                          showToast('Simulating GPS coordinates outside site radius (approx. 1.5km)', 'warning');
+                        } else {
+                          showToast('No project selected to simulate coordinates', 'error');
+                        }
+                      }}
+                      style={{
+                        border: 'none',
+                        background: '#64748b',
+                        color: 'white',
+                        fontSize: '0.6rem',
+                        padding: '2px 6px',
+                        borderRadius: '3px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      Mock Far
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
