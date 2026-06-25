@@ -3,7 +3,7 @@ import { ChevronLeft, User, Fingerprint, Mail, Phone, Key } from 'lucide-react';
 
 export default function PhoneRegister({ registerPartTimer, setScreen, setRegSuccessMsg, showToast }) {
   const [regName, setRegName] = useState('');
-  const [salutation, setSalutation] = useState('En.');
+  const [salutation, setSalutation] = useState('Engineer');
   const [regIc, setRegIc] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPhone, setRegPhone] = useState('');
@@ -86,24 +86,10 @@ export default function PhoneRegister({ registerPartTimer, setScreen, setRegSucc
       <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '1.5rem' }}>Fill in details to register as a part-timer.</p>
 
       <form onSubmit={handleSubmit}>
-        <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '0.5rem' }}>
-          <div className="form-group">
-            <label className="form-label">Title</label>
-            <select 
-              className="form-input" 
-              style={{ padding: '0.4rem' }}
-              value={salutation} 
-              onChange={(e) => setSalutation(e.target.value)}
-              required
-            >
-              <option value="En.">En.</option>
-              <option value="Cik">Cik</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label">
-              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><User size={14} /> Full Name</span>
-            </label>
+        <div className="form-group">
+          <label className="form-label">
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><User size={14} /> Full Name</span>
+          </label>
             <input 
               type="text" 
               className="form-input" 
@@ -113,7 +99,6 @@ export default function PhoneRegister({ registerPartTimer, setScreen, setRegSucc
               required
             />
           </div>
-        </div>
 
         <div className="form-group">
           <label className="form-label">

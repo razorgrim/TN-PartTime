@@ -5,7 +5,7 @@ export default function PhoneProfileTab({ partTimerSession, updateStaffProfile, 
   const [bankName, setBankName] = useState(partTimerSession.bankName || '');
   const [bankAccount, setBankAccount] = useState(partTimerSession.bankAccount || '');
   const [bankHolder, setBankHolder] = useState(partTimerSession.bankHolder || '');
-  const [salutation, setSalutation] = useState(partTimerSession.salutation || 'En.');
+  const [salutation, setSalutation] = useState(partTimerSession.salutation || 'Engineer');
 
   // Password change states
   const [currentPassword, setCurrentPassword] = useState('');
@@ -78,7 +78,7 @@ export default function PhoneProfileTab({ partTimerSession, updateStaffProfile, 
             {partTimerSession.name ? partTimerSession.name.charAt(0).toUpperCase() : '?'}
           </div>
           <div>
-            <div style={{ fontSize: '0.9rem', fontWeight: 700 }}>{(partTimerSession.salutation || 'En.') + ' ' + partTimerSession.name}</div>
+            <div style={{ fontSize: '0.9rem', fontWeight: 700 }}>{"Engineer " + partTimerSession.name}</div>
             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Registered Part-Timer</div>
           </div>
         </div>
@@ -90,8 +90,8 @@ export default function PhoneProfileTab({ partTimerSession, updateStaffProfile, 
           </h4>
           <div className="card" style={{ padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.8rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Title / Salutation:</span>
-              <strong style={{ color: 'var(--text-primary)' }}>{partTimerSession.salutation || 'En.'}</strong>
+              <span style={{ color: 'var(--text-secondary)' }}>Designation:</span>
+              <strong style={{ color: 'var(--text-primary)' }}>Engineer</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: 'var(--text-secondary)' }}>IC Number:</span>
@@ -162,19 +162,7 @@ export default function PhoneProfileTab({ partTimerSession, updateStaffProfile, 
             Bank & Payout Info
           </h4>
           <form onSubmit={handleSaveBankDetails} className="card" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div className="form-group">
-              <label className="form-label" style={{ fontSize: '0.75rem' }}>Title / Salutation</label>
-              <select 
-                className="form-input" 
-                style={{ padding: '0.5rem 0.75rem', fontSize: '0.8rem' }}
-                value={salutation} 
-                onChange={(e) => setSalutation(e.target.value)}
-                required
-              >
-                <option value="En.">En. (Encik - Male)</option>
-                <option value="Cik">Cik (Female)</option>
-              </select>
-            </div>
+
             <div className="form-group">
               <label className="form-label" style={{ fontSize: '0.75rem' }}>Bank Name</label>
               <input 

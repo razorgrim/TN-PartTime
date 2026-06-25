@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { AppContext } from '../../context/AppContext';
 import logoImg from '../../assets/logo.png';
-import { FileText, Printer, Send, X } from 'lucide-react';
+import { FileText, Printer, Send, X, Download } from 'lucide-react';
 
 const formatDuration = (minutes) => {
   if (!minutes) return '0m';
@@ -111,6 +111,42 @@ export default function PhoneClaimsTab({ partTimerSession, shifts }) {
       console.error(e);
       showToast("Failed to submit claim form.", "error");
     }
+  };
+
+  const handleDownloadHTML = () => {
+    const element = document.getElementById('printable-claim-sheet');
+    if (!element) return;
+    const htmlContent = element.innerHTML;
+    const fullHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Claim Form - ${partTimerSession?.name || 'Staff'}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; padding: 40px; background-color: #f1f5f9; font-family: 'Outfit', sans-serif; }
+    .claim-container { max-width: 900px; margin: 0 auto; background: white; padding: 40px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 8px; color: black; }
+    @media print {
+      @page { size: landscape; margin: 20mm; }
+      body { background-color: white; padding: 0; }
+      .claim-container { box-shadow: none; padding: 0; max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="claim-container">${htmlContent}</div>
+</body>
+</html>`;
+    const blob = new Blob([fullHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Claim_Form_${(partTimerSession?.name || 'Staff').replace(/\\s+/g, '_')}_${new Date().toISOString().substring(0, 10)}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast("Claim form downloaded successfully!", "success");
   };
 
   return (
@@ -304,15 +340,15 @@ export default function PhoneClaimsTab({ partTimerSession, shifts }) {
             className="card animate-scale"
             style={{
               width: '100%',
-              maxWidth: '800px',
+              maxWidth: '850px',
               backgroundColor: 'white',
               maxHeight: '90vh',
-              overflowY: 'auto',
               borderRadius: '16px',
               border: '1px solid var(--border-color)',
               display: 'flex',
               flexDirection: 'column',
-              boxShadow: 'var(--shadow-xl)'
+              boxShadow: 'var(--shadow-xl)',
+              overflow: 'hidden'
             }}
           >
             {/* Modal Controls Header */}
@@ -322,11 +358,19 @@ export default function PhoneClaimsTab({ partTimerSession, shifts }) {
                 borderBottom: '1px solid var(--border-color)', 
                 display: 'flex', 
                 justifyContent: 'space-between', 
-                alignItems: 'center' 
+                alignItems: 'center',
+                flexShrink: 0
               }}
             >
               <h3 style={{ fontSize: '0.95rem', fontWeight: 700 }}>Claim Form Preview</h3>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button
+                  onClick={handleDownloadHTML}
+                  className="btn btn-secondary"
+                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', height: '30px', backgroundColor: '#e2e8f0', color: '#1e293b', borderColor: '#cbd5e1' }}
+                >
+                  <Download size={13} /> Download Form
+                </button>
                 <button
                   onClick={() => window.print()}
                   className="btn btn-secondary"
@@ -394,7 +438,7 @@ export default function PhoneClaimsTab({ partTimerSession, shifts }) {
                   backgroundColor: '#f8fafc'
                 }}
               >
-                {(partTimerSession?.salutation || 'En. / Cik').toUpperCase() + ' ' + (partTimerSession?.name || '').toUpperCase()}
+                {"ENGINEER " + (partTimerSession?.name || '').toUpperCase()}
               </div>
 
               {/* Employee Information Table */}
@@ -422,7 +466,8 @@ export default function PhoneClaimsTab({ partTimerSession, shifts }) {
               </table>
 
               {/* Claims Details Breakdown Table */}
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem' }}>
+              <div style={{ width: '100%', overflowX: 'auto', marginBottom: '1.5rem' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', minWidth: '700px' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#f1f5f9', fontWeight: 800 }}>
                     <th style={{ border: '1px solid black', padding: '8px', textAlign: 'center', width: '12%' }}>Date</th>
@@ -485,6 +530,7 @@ export default function PhoneClaimsTab({ partTimerSession, shifts }) {
                   </tr>
                 </tbody>
               </table>
+              </div>
 
               {/* Signature Blocks */}
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '3.5rem', fontSize: '0.72rem' }}>

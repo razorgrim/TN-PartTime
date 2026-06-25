@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 
 export default function EditStaffModal({ user, onClose, onSave, showToast }) {
   const [editName, setEditName] = useState(user.name || '');
-  const [salutation, setSalutation] = useState(user.salutation || 'En.');
+  const [salutation, setSalutation] = useState(user.salutation || 'Engineer');
   const [editIc, setEditIc] = useState(user.icNumber || '');
   const [editEmail, setEditEmail] = useState(user.email || '');
   const [editPhone, setEditPhone] = useState(user.phone || '');
@@ -87,31 +87,16 @@ export default function EditStaffModal({ user, onClose, onSave, showToast }) {
         {/* Modal Form */}
         <form onSubmit={handleSubmit}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '0.5rem' }}>
-              <div className="form-group">
-                <label className="form-label">Title</label>
-                <select 
-                  className="form-input" 
-                  style={{ padding: '0.4rem' }}
-                  value={salutation} 
-                  onChange={(e) => setSalutation(e.target.value)}
-                  required
-                >
-                  <option value="En.">En.</option>
-                  <option value="Cik">Cik</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Full Name</label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  placeholder="e.g. Tan Ah Kow"
-                  required
-                />
-              </div>
+            <div className="form-group">
+              <label className="form-label">Full Name</label>
+              <input 
+                type="text" 
+                className="form-input" 
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="e.g. Tan Ah Kow"
+                required
+              />
             </div>
 
             <div className="form-group">
