@@ -46,8 +46,8 @@ export default function PhoneSimulator({ showToast, onBackToLanding }) {
   const getBrowserLocation = () => {
     const isInsecure = typeof window !== 'undefined' && window.isSecureContext === false;
     if (!navigator.geolocation || isInsecure) {
-      console.warn('Browser Geolocation is unavailable (requires HTTPS). Fallback to simulated coordinates active.');
-      setGpsError(null);
+      setGpsError('GPS blocked: secure context (HTTPS) is required for device location.');
+      setUserCoords(null);
       return;
     }
     setGpsLoading(true);
@@ -58,14 +58,16 @@ export default function PhoneSimulator({ showToast, onBackToLanding }) {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude
         });
-        setGpsLoading(false);
-      },
-      (err) => {
-        console.warn('Native geolocation failed, using simulated coordinates fallback:', err);
         setGpsError(null);
         setGpsLoading(false);
       },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      (err) => {
+        console.error('Native geolocation failed:', err);
+        setGpsError('Location access denied or unavailable. Please enable browser location permissions.');
+        setUserCoords(null);
+        setGpsLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
