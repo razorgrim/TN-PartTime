@@ -64,6 +64,26 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
     showToast("Claim form downloaded successfully!", "success");
   };
 
+  const handleDownloadPDF = () => {
+    const element = document.getElementById('printable-admin-claim-sheet');
+    if (!element) return;
+    
+    const opt = {
+      margin:       10,
+      filename:     `Claim_Form_${(selectedUser?.name || 'Staff').replace(/\s+/g, '_')}_${new Date().toISOString().substring(0, 10)}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true, logging: false },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    };
+    
+    if (window.html2pdf) {
+      window.html2pdf().set(opt).from(element).save();
+      showToast("PDF Claim Form downloaded successfully!", "success");
+    } else {
+      showToast("PDF generation library is loading. Please try again in a moment.", "error");
+    }
+  };
+
   const getWorkerClaims = (workerId, workerShifts) => {
     const workerClaims = claims.filter(c => c.workerId === workerId);
     return workerClaims.map(claim => {
@@ -467,6 +487,13 @@ export default function ClaimsManager({ users, shifts, claims, adjustClaim, show
                   style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', height: '30px', backgroundColor: '#e2e8f0', color: '#1e293b', borderColor: '#cbd5e1' }}
                 >
                   <Download size={13} /> Download Form
+                </button>
+                <button
+                  onClick={handleDownloadPDF}
+                  className="btn btn-secondary"
+                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', height: '30px', backgroundColor: '#e0f2fe', color: '#0369a1', borderColor: '#bae6fd' }}
+                >
+                  <FileText size={13} /> Download PDF
                 </button>
                 <button
                   onClick={() => window.print()}
