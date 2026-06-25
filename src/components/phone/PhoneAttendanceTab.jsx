@@ -77,6 +77,9 @@ export default function PhoneAttendanceTab({
     ? shifts.find(s => s.workerId === partTimerSession?.id && s.jobId === selectedJob.id && s.status === 'completed')
     : null;
 
+  // Check if user has an active shift on ANY job
+  const anyActiveShift = shifts.find(s => s.workerId === partTimerSession?.id && s.status === 'active');
+
   // Leaflet map setup
   useEffect(() => {
     if (!selectedJob || !selectedJob.latitude || !selectedJob.longitude) return;
@@ -401,9 +404,9 @@ export default function PhoneAttendanceTab({
 
                 {/* Status Badges */}
                 <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.15rem' }}>
-                  <span style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 700 }}>
+                  {/* <span style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 700 }}>
                     RM {Number(selectedJob?.payRate || 0).toFixed(2)} / Job
-                  </span>
+                  </span> */}
 
                   {distanceMeters !== null ? (
                     <span style={{
@@ -443,13 +446,24 @@ export default function PhoneAttendanceTab({
         {selectedJob ? (
           <div style={{ marginBottom: '1.5rem' }}>
             {(!userJobActiveShift && !userJobCompletedShift) && (
-              <button
-                className="attendance-large-btn attendance-large-btn-in animate-scale"
-                onClick={() => handleClockIn(selectedJob.id)}
-              >
-                <Fingerprint size={28} />
-                <span>CLOCK IN</span>
-              </button>
+              anyActiveShift ? (
+                <button
+                  className="attendance-large-btn attendance-large-btn-in animate-scale"
+                  disabled
+                  style={{ opacity: 0.6, cursor: 'not-allowed', backgroundColor: '#64748b' }}
+                >
+                  <Fingerprint size={28} style={{ color: '#cbd5e1' }} />
+                  <span style={{ fontSize: '0.7rem' }}>ACTIVE AT OTHER SITE</span>
+                </button>
+              ) : (
+                <button
+                  className="attendance-large-btn attendance-large-btn-in animate-scale"
+                  onClick={() => handleClockIn(selectedJob.id)}
+                >
+                  <Fingerprint size={28} />
+                  <span>CLOCK IN</span>
+                </button>
+              )
             )}
             {userJobActiveShift && (
               <button

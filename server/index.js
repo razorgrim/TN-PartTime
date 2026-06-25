@@ -477,6 +477,14 @@ app.post('/api/shifts/clockin', async (req, res) => {
 
   try {
     const db = getDb();
+    const [existingActiveShifts] = await db.query(
+      'SELECT * FROM shifts WHERE workerId = ? AND status = "active"',
+      [workerId]
+    );
+    if (existingActiveShifts.length > 0) {
+      return res.status(400).json({ error: 'You are already clocked in to another project site. Please clock out first.' });
+    }
+
     const [jobRows] = await db.query('SELECT * FROM jobs WHERE id = ?', [jobId]);
     const job = jobRows[0];
     if (!job) {
